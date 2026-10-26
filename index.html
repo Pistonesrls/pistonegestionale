@@ -9,439 +9,124 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --bg: #ffffff;
-  --bg-soft: #f9fafb;
-  --bg-muted: #f3f4f6;
-  --border: #e5e7eb;
-  --border-strong: #d1d5db;
-  --text: #111827;
-  --text-muted: #6b7280;
-  --text-faint: #9ca3af;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-soft: #eff6ff;
-  --success: #059669;
-  --danger: #dc2626;
-  --warning: #d97706;
+  --bg: #ffffff; --bg-soft: #f9fafb; --bg-muted: #f3f4f6;
+  --border: #e5e7eb; --border-strong: #d1d5db;
+  --text: #111827; --text-muted: #6b7280; --text-faint: #9ca3af;
+  --accent: #2563eb; --accent-hover: #1d4ed8; --accent-soft: #eff6ff;
+  --success: #059669; --danger: #dc2626; --warning: #d97706;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body {
-  font-family: 'Inter', -apple-system, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  padding: 16px;
-  padding-bottom: 80px;
-  font-size: 14px;
-  line-height: 1.5;
-  transition: background 0.3s;
-}
+body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 16px; padding-bottom: 80px; font-size: 14px; line-height: 1.5; transition: background 0.3s; }
 body.stale { background: #fef2f2; }
 body.stale .stale-banner { display: block; }
 .container { max-width: 860px; margin: 0 auto; }
-
-.stale-banner {
-  display: none;
-  background: var(--danger);
-  color: white;
-  padding: 12px;
-  border-radius: 10px;
-  text-align: center;
-  font-weight: 600;
-  margin-bottom: 14px;
-  font-size: 13px;
-}
+.stale-banner { display: none; background: var(--danger); color: white; padding: 12px; border-radius: 10px; text-align: center; font-weight: 600; margin-bottom: 14px; font-size: 13px; }
 .stale-banner small { display: block; font-weight: 400; opacity: 0.9; margin-top: 2px; }
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border);
-}
+.header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .header h1 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .last-update { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 .header-actions { display: flex; gap: 6px; }
-.icon-btn {
-  width: 36px; height: 36px; padding: 0;
-  background: white; border: 1px solid var(--border);
-  border-radius: 8px; cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
-  color: var(--text); font-size: 16px;
-}
+.icon-btn { width: 36px; height: 36px; padding: 0; background: white; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--text); font-size: 16px; }
 .icon-btn.danger { color: var(--danger); }
-
-button {
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 0.15s;
-}
+button { font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 14px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-primary { background: var(--accent); color: white; }
 .btn-success { background: var(--success); color: white; }
 .btn-danger { background: var(--danger); color: white; }
 .btn-ghost { background: white; color: var(--text); border: 1px solid var(--border); }
 .btn-soft { background: var(--bg-muted); color: var(--text); }
-
-/* Dropzone */
-.file-zone {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 12px;
-  background: var(--bg-soft);
-}
-.file-zone h3 {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-label.dropzone {
-  display: block;
-  border: 2px dashed var(--border-strong);
-  background: white;
-  border-radius: 10px;
-  padding: 24px 14px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-label.dropzone:hover, label.dropzone.dragover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
+.file-zone { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; background: var(--bg-soft); }
+.file-zone h3 { font-size: 13px; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+label.dropzone { display: block; border: 2px dashed var(--border-strong); background: white; border-radius: 10px; padding: 24px 14px; text-align: center; cursor: pointer; transition: all 0.15s; }
+label.dropzone:hover, label.dropzone.dragover { border-color: var(--accent); background: var(--accent-soft); }
 label.dropzone i { font-size: 28px; color: var(--text-faint); display: block; margin-bottom: 6px; }
 label.dropzone .label { font-weight: 600; font-size: 13px; }
 label.dropzone .sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 input[type="file"] { display: none; }
-
-/* Manual form */
-.manual-form {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg-soft);
-  margin-bottom: 12px;
-  overflow: hidden;
-}
-.manual-toggle {
-  width: 100%;
-  background: transparent;
-  border: none;
-  padding: 12px 14px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  color: var(--text);
-}
+.manual-form { border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); margin-bottom: 12px; overflow: hidden; }
+.manual-toggle { width: 100%; background: transparent; border: none; padding: 12px 14px; text-align: left; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: var(--text); }
 .manual-body { display: none; padding: 0 14px 14px; }
 .manual-body.active { display: block; }
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 8px;
-}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .form-field { display: flex; flex-direction: column; gap: 3px; }
 .form-field label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
-.form-field input, .form-field select, .form-field textarea {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 13px;
-  background: white;
-}
-.form-field input:focus, .form-field select:focus, .form-field textarea:focus {
-  outline: none;
-  border-color: var(--accent);
-}
+.form-field input, .form-field select, .form-field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 13px; background: white; }
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: var(--accent); }
 .form-field.full { grid-column: span 2; }
-
-/* Loading */
-.loading {
-  display: none;
-  border: 1px solid #bfdbfe;
-  background: var(--accent-soft);
-  border-radius: 10px;
-  padding: 14px;
-  margin-bottom: 12px;
-}
+.loading { display: none; border: 1px solid #bfdbfe; background: var(--accent-soft); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
 .loading.active { display: block; }
 .loading-title { font-weight: 700; color: var(--accent); font-size: 13px; margin-bottom: 4px; }
 .loading-status { font-size: 12px; color: var(--accent-hover); margin-bottom: 8px; min-height: 16px; }
 .progress { height: 6px; background: #dbeafe; border-radius: 999px; overflow: hidden; }
 .progress-fill { height: 100%; background: var(--accent); transition: width 0.2s; width: 0%; }
-
-/* Preview */
-.preview {
-  display: none;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg-soft);
-  padding: 14px;
-  margin-bottom: 12px;
-}
+.preview { display: none; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); padding: 14px; margin-bottom: 12px; }
 .preview.active { display: block; }
 .preview h3 { font-size: 13px; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 .preview-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
-.stat-mini {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px;
-  text-align: center;
-}
+.stat-mini { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; }
 .stat-mini .num { font-size: 20px; font-weight: 800; display: block; }
 .stat-mini .num-ok { color: var(--success); }
 .stat-mini .num-skip { color: var(--text-faint); }
 .stat-mini .lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
-.reasons {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px;
-  max-height: 140px;
-  overflow: auto;
-  font-size: 12px;
-  margin-bottom: 10px;
-}
+.reasons { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 8px; max-height: 140px; overflow: auto; font-size: 12px; margin-bottom: 10px; }
 .reason { display: flex; justify-content: space-between; padding: 3px 4px; border-bottom: 1px solid var(--bg-muted); }
 .reason:last-child { border-bottom: none; }
 .reason-count { font-weight: 600; color: var(--text-muted); }
 .preview-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-/* Search */
 .search-wrap { position: relative; margin-bottom: 12px; }
 .search-wrap i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-faint); }
-.search-wrap input {
-  width: 100%;
-  padding: 10px 12px 10px 34px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 13px;
-  background: white;
-}
+.search-wrap input { width: 100%; padding: 10px 12px 10px 34px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 13px; background: white; }
 .search-wrap input:focus { outline: none; border-color: var(--accent); }
-
-/* Stats */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
-  margin-bottom: 14px;
-}
+.stats-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 14px; }
 @media (max-width: 640px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
-.stat-card {
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 6px;
-  text-align: center;
-}
+.stat-card { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 10px 6px; text-align: center; }
 .stat-card .n { font-size: 18px; font-weight: 800; display: block; }
 .stat-card .l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
-
-/* Cards */
-.card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 10px;
-  transition: all 0.15s;
-}
+.card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; transition: all 0.15s; }
 .card.no-evade { border-left: 3px solid var(--warning); }
 .card.overdue { border-left: 3px solid var(--danger); background: #fff5f5; }
 .card.manual { border-left: 3px solid var(--accent); background: var(--accent-soft); }
-
-.card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 4px;
-}
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px; }
 .card-title { flex: 1; min-width: 0; }
-.order-num {
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
+.order-num { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .order-date { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.cliente {
-  font-size: 15px;
-  font-weight: 700;
-  margin-top: 4px;
-  color: var(--text);
-}
-.desc {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-style: italic;
-  margin-top: 2px;
-}
+.cliente { font-size: 15px; font-weight: 700; margin-top: 4px; color: var(--text); }
+.desc { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 2px; }
 .desc.placeholder { opacity: 0.5; }
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
 .badge-alberto { background: #f3e8ff; color: #7c3aed; }
 .badge-pietro { background: #e0f2fe; color: #0891b2; }
 .badge-samuele { background: #d1fae5; color: #059669; }
 .badge-salvo { background: var(--bg-muted); color: #475569; }
 .badge-smistare { background: #fef3c7; color: #b45309; }
 .badge-manual { background: var(--accent-soft); color: var(--accent); }
-
-.tag {
-  display: inline-block;
-  padding: 2px 7px;
-  background: var(--bg-muted);
-  border-radius: 4px;
-  font-size: 10px;
-  color: #4b5563;
-  font-weight: 600;
-}
+.tag { display: inline-block; padding: 2px 7px; background: var(--bg-muted); border-radius: 4px; font-size: 10px; color: #4b5563; font-weight: 600; }
 .tag.highlight { background: #fef3c7; color: var(--warning); }
-
-.fields {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--bg-muted);
-  display: grid;
-  gap: 6px;
-}
-.field {
-  display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 8px;
-  align-items: start;
-}
-.field label {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 500;
-  padding-top: 7px;
-}
-.field input, .field textarea {
-  width: 100%;
-  padding: 7px 9px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 12px;
-  background: white;
-}
+.fields { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--bg-muted); display: grid; gap: 6px; }
+.field { display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: start; }
+.field label { font-size: 11px; color: var(--text-muted); font-weight: 500; padding-top: 7px; }
+.field input, .field textarea { width: 100%; padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 12px; background: white; }
 .field input:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
 .field textarea { resize: vertical; min-height: 32px; }
-.card-actions {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 6px;
-  margin-top: 8px;
-}
+.card-actions { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 8px; }
 .save-btn { background: var(--accent); color: white; padding: 7px 12px; font-size: 12px; }
 .delete-btn { background: white; color: var(--danger); border: 1px solid var(--border); padding: 7px 10px; font-size: 12px; }
-
-/* Debug */
-.debug-panel {
-  background: #0f172a;
-  color: #e2e8f0;
-  border-radius: 10px;
-  padding: 10px;
-  font-family: monospace;
-  font-size: 10px;
-  max-height: 200px;
-  overflow: auto;
-  margin: 10px 0;
-  display: none;
-}
+.debug-panel { background: #0f172a; color: #e2e8f0; border-radius: 10px; padding: 10px; font-family: monospace; font-size: 10px; max-height: 240px; overflow: auto; margin: 10px 0; display: none; }
 .debug-panel.active { display: block; }
 .debug-panel .info { color: #93c5fd; }
 .debug-panel .success { color: #86efac; }
 .debug-panel .warning { color: #fde047; }
 .debug-panel .error { color: #fca5a5; }
 .debug-panel .step { color: #c4b5fd; font-weight: 700; }
-
-/* Empty */
-.empty {
-  text-align: center;
-  padding: 36px 16px;
-  color: var(--text-muted);
-}
+.empty { text-align: center; padding: 36px 16px; color: var(--text-muted); }
 .empty i { font-size: 36px; display: block; margin-bottom: 8px; opacity: 0.4; }
-
-/* Modal */
-.modal-bg {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(15,23,42,0.45);
-  z-index: 1000;
-  padding: 20px;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(3px);
-}
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 1000; padding: 20px; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
 .modal-bg.active { display: flex; }
-.modal {
-  background: white;
-  border-radius: 14px;
-  padding: 20px;
-  width: 100%;
-  max-width: 420px;
-}
+.modal { background: white; border-radius: 14px; padding: 20px; width: 100%; max-width: 420px; }
 .modal h3 { font-size: 15px; margin-bottom: 8px; }
 .modal-body { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px; }
 .modal-actions { display: grid; gap: 6px; }
-
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111827;
-  color: white;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 12px;
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 90vw;
-}
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #111827; color: white; padding: 10px 14px; border-radius: 10px; font-size: 12px; z-index: 2000; display: flex; align-items: center; gap: 6px; max-width: 90vw; }
 .toast.success { background: var(--success); }
 .toast.error { background: var(--danger); }
 </style>
@@ -449,7 +134,6 @@ input[type="file"] { display: none; }
 <body>
 
 <div class="container">
-
   <div class="stale-banner">
     <i class="bi bi-exclamation-triangle-fill"></i> ATTENZIONE: DATI NON AGGIORNATI
     <small>Ultimo caricamento oltre 24h fa</small>
@@ -469,7 +153,7 @@ input[type="file"] { display: none; }
   <button class="btn-soft" id="debugToggle" style="margin-bottom: 10px; font-size: 11px; padding: 6px 10px;">
     <i class="bi bi-terminal"></i> Mostra log
   </button>
-  <div class="debug-panel" id="debugPanel"></div>
+  <div class="debug-panel active" id="debugPanel"></div>
 
   <div class="loading" id="loadingBox">
     <div class="loading-title" id="loadingTitle">Elaborazione...</div>
@@ -477,7 +161,6 @@ input[type="file"] { display: none; }
     <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
   </div>
 
-  <!-- CSV Import -->
   <div class="file-zone">
     <h3><i class="bi bi-file-earmark-spreadsheet"></i> Import da CSV Danea</h3>
     <label for="csvFile" class="dropzone" id="dropzone">
@@ -488,7 +171,6 @@ input[type="file"] { display: none; }
     <input type="file" id="csvFile" accept=".csv,.txt,text/csv">
   </div>
 
-  <!-- Manual Insert -->
   <div class="manual-form">
     <button class="manual-toggle" id="manualToggle">
       <span><i class="bi bi-plus-circle"></i> Aggiungi ordine manualmente</span>
@@ -546,7 +228,6 @@ input[type="file"] { display: none; }
     </div>
   </div>
 
-  <!-- Preview -->
   <div class="preview" id="preview">
     <h3><i class="bi bi-clipboard-data"></i> Anteprima filtraggio CSV</h3>
     <div class="preview-stats" id="previewStats"></div>
@@ -557,21 +238,15 @@ input[type="file"] { display: none; }
     </div>
   </div>
 
-  <!-- Search -->
   <div class="search-wrap">
     <i class="bi bi-search"></i>
     <input type="text" id="searchInput" placeholder="Cerca cliente, numero, note, descrizione...">
   </div>
 
-  <!-- Stats -->
   <div class="stats-row" id="statsRow"></div>
-
-  <!-- List -->
   <div id="ordersList"></div>
-
 </div>
 
-<!-- Modal -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h3 id="modalTitle"></h3>
@@ -592,11 +267,10 @@ let pendingImport = null;
 let customMap = {};
 
 const currentYear = new Date().getFullYear();
-const prevYearOct1 = new Date(currentYear - 1, 9, 1); // 1 ottobre anno precedente
+const prevYearOct1 = new Date(currentYear - 1, 9, 1);
 
 const $ = id => document.getElementById(id);
 
-// ============ DEBUG LOG ============
 function log(msg, type = "info") {
   const p = $("debugPanel");
   const t = new Date().toLocaleTimeString("it-IT", { hour12: false });
@@ -641,7 +315,6 @@ function toDatetimeLocalValue(v) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-// ============ SUPABASE ============
 function initSupabase() {
   try {
     if (!window.supabase) throw new Error("Libreria Supabase non caricata");
@@ -702,11 +375,9 @@ function hasValidSector(settore) {
 function isStatoValidoGlobale(stato) {
   if (!stato) return false;
   const s = stato.toLowerCase();
-  // Esclusioni globali
   if (s.includes("concluso")) return false;
   if (s.includes("annullato")) return false;
   if (s.includes("sospeso")) return false;
-  // Stati accettati
   if (s.includes("confermato") || s.includes("confermare")) return true;
   return false;
 }
@@ -714,7 +385,6 @@ function isStatoValidoGlobale(stato) {
 function isSoloConfermato(stato) {
   if (!stato) return false;
   const s = stato.toLowerCase();
-  // Solo "confermato" puro (non "da confermare", non "concluso")
   if (s.includes("concluso")) return false;
   if (s.includes("annullato")) return false;
   if (s.includes("sospeso")) return false;
@@ -732,11 +402,26 @@ function isConfermatoODaConfermare(stato) {
 }
 
 // ============ LOGICA SITUAZIONI ============
-function classifyOrder(fields) {
-  // Struttura attesa: [0]spazio [1]data [2]operatore [3]numero [4]stato [5]grafico [6]data evasione [7]cliente [8]note [9]prezzo [10]settore
-  if (fields.length < 11) return { valid: false, reason: "Riga incompleta" };
+// MAPPATURA CORRETTA COLONNE:
+// [0] vuoto [1] data [2] operatore commerciale [3] numero [4] stato 
+// [5] GRAFICO [6] data evasione [7] cliente [8] note [9] prezzo [10+] settori/vari
 
-  // Rileva prima data italiana valida tra i primi campi (per gestire anomalie)
+function findSettore(fields, startIdx) {
+  // Cerca il settore tra i campi dal index startIdx in poi
+  const settoriTarget = ["PLOTTER", "INSEGNE", "FURGONE", "DIGITALE", "DTF", "RICAMO", "SERIGRAFIA", "STAMPA UV", "STAMPA DIRETTA", "SUBLIMAZIONE", "POLIFLEX", "LITOGRAFIA", "TIMBRI"];
+  for (let i = startIdx; i < fields.length; i++) {
+    const f = (fields[i] || "").toUpperCase();
+    for (const s of settoriTarget) {
+      if (f.includes(s)) return fields[i];
+    }
+  }
+  return "";
+}
+
+function classifyOrder(fields) {
+  if (fields.length < 10) return { valid: false, reason: "Riga troppo corta" };
+
+  // Trova la prima data italiana valida tra i primi 3 campi
   let dataIdx = -1;
   for (let i = 0; i < Math.min(3, fields.length); i++) {
     if (isItalianDate(fields[i])) { dataIdx = i; break; }
@@ -744,15 +429,19 @@ function classifyOrder(fields) {
   if (dataIdx < 0) return { valid: false, reason: "Data non trovata" };
 
   const offset = dataIdx;
+  // MAPPATURA CORRETTA
   const dataStr = fields[offset] || "";
-  const operatore = (fields[offset + 1] || "").trim();
+  const operatoreComm = (fields[offset + 1] || "").trim(); // operatore commerciale (SALVO G, ENRICA, etc)
   const numero = (fields[offset + 2] || "").trim();
   const stato = (fields[offset + 3] || "").trim();
-  const grafico = (fields[offset + 4] || "").trim();
+  const grafico = (fields[offset + 4] || "").trim(); // <-- QUESTO è il campo grafico vero
   const dataEvasione = (fields[offset + 5] || "").trim();
   const cliente = (fields[offset + 6] || "").trim();
   const note = (fields[offset + 7] || "").trim();
-  const settore = (fields[offset + 9] || "").trim();
+  const prezzo = (fields[offset + 8] || "").trim();
+  
+  // Il settore è nei campi successivi (possono essere multipli)
+  const settore = findSettore(fields, offset + 9);
 
   const data = parseItalianDate(dataStr);
   if (!data) return { valid: false, reason: "Data non valida" };
@@ -769,7 +458,7 @@ function classifyOrder(fields) {
     return { valid: false, reason: "Numero /B" };
   }
 
-  // === CONTROLLO SETTORE (deve contenere PLOTTER/INSEGNE/FURGONE) ===
+  // === CONTROLLO SETTORE ===
   if (!hasValidSector(settore)) {
     return { valid: false, reason: `Settore non valido: ${settore || "n/d"}` };
   }
@@ -779,7 +468,7 @@ function classifyOrder(fields) {
     if (isOnlyDigits(numero) && isSoloConfermato(stato)) {
       return buildValid({ numero, year, cliente, data_ordine: data, grafico, stato, settore, note, situation: 1 });
     }
-    return { valid: false, reason: "Situazione 1 non soddisfatta (serve numero cifre + Confermato)" };
+    return { valid: false, reason: "Situazione 1 non soddisfatta" };
   }
 
   // === SITUAZIONE 2: grafici attivi ===
@@ -793,12 +482,11 @@ function classifyOrder(fields) {
       graficoUp === "SAMUELE - COMPLETATO" ||
       graficoUp === "COMPLETATO") {
     if (!isOnlyDigits(numero)) {
-      return { valid: false, reason: "Situazione 3: numero non solo cifre" };
+      return { valid: false, reason: "Situazione 3: numero non cifre" };
     }
     if (!isConfermatoODaConfermare(stato)) {
       return { valid: false, reason: `Situazione 3: stato non valido (${stato})` };
     }
-    // Anno: attuale O ultimi 3 mesi anno precedente
     if (year === currentYear) {
       return buildValid({ numero, year, cliente, data_ordine: data, grafico, stato, settore, note, situation: 3 });
     }
@@ -808,7 +496,6 @@ function classifyOrder(fields) {
     return { valid: false, reason: `Situazione 3: anno ${year} fuori range` };
   }
 
-  // Altri grafici (FABRIS, SALVO G., SALVO P., etc.) → esclusi
   return { valid: false, reason: `Grafico escluso: ${grafico}` };
 }
 
@@ -824,7 +511,7 @@ function buildValid({ numero, year, cliente, data_ordine, grafico, stato, settor
       grafico: grafico,
       stato: stato,
       settore: settore,
-      note_interne: note || ""
+      descrizione_breve: note || "" // Le note del CSV diventano descrizione breve
     }
   };
 }
@@ -832,7 +519,6 @@ function buildValid({ numero, year, cliente, data_ordine, grafico, stato, settor
 // ============ PROCESS CSV ============
 function processCSV(text) {
   log("═══ PROCESSAMENTO CSV ═══", "step");
-  // Rimuovi BOM
   if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
   
   const lines = text.split(/\r?\n/).filter(l => l.trim());
@@ -847,14 +533,15 @@ function processCSV(text) {
     const result = classifyOrder(fields);
     if (result.valid) {
       valid.push(result.data);
-      if (valid.length <= 3) log(`✓ Ordine ${result.data.numero_ordine} (Situazione ${result.situation})`, "success");
+      if (valid.length <= 5) {
+        log(`✓ Ordine ${result.data.numero_ordine} (${result.data.cliente}) - Sit. ${result.situation} - Settore: ${result.data.settore}`, "success");
+      }
     } else {
       skipped++;
       reasons[result.reason] = (reasons[result.reason] || 0) + 1;
     }
   });
 
-  // Dedup
   const map = new Map();
   valid.forEach(o => {
     const key = `${o.numero_ordine}_${o.anno_ordine}`;
@@ -943,13 +630,17 @@ async function doImport() {
   if (!supabase) { toast("Supabase non disponibile", "error"); return; }
 
   showLoading("Verifica dati esistenti...", "", 10);
-  log("Verifica dati esistenti su Supabase...", "step");
+  log("Verifica dati esistenti...", "step");
 
   try {
     const { data, error } = await supabase
       .from("ordini")
       .select("numero_ordine, anno_ordine, note_interne, descrizione_breve, data_evasione_grafica");
-    if (error) throw error;
+    
+    if (error) {
+      log("❌ Errore query: " + error.message + " (code: " + error.code + ")", "error");
+      throw error;
+    }
 
     customMap = {};
     (data || []).forEach(row => {
@@ -986,7 +677,7 @@ async function doImport() {
   } catch (err) {
     hideLoading();
     log("❌ Errore: " + err.message, "error");
-    toast("Errore verifica", "error");
+    toast("Errore: " + err.message, "error");
   }
 }
 
@@ -1000,22 +691,42 @@ async function runImport(keepCustom) {
       .from("ordini")
       .delete()
       .eq("inserito_manuale", false);
-    if (delErr) throw delErr;
+    if (delErr) {
+      log("❌ Errore delete: " + delErr.message, "error");
+      throw delErr;
+    }
     log("Ordini CSV precedenti cancellati", "success");
 
     const rows = pendingImport.valid.map(o => ({ ...o, inserito_manuale: false }));
-    const BATCH = 100;
+    const BATCH = 50;
     let inserted = 0;
+    let failed = 0;
 
     for (let i = 0; i < rows.length; i += BATCH) {
       const batch = rows.slice(i, i + BATCH);
-      const { error } = await supabase.from("ordini").insert(batch);
-      if (error) throw error;
-      inserted += batch.length;
+      const { data, error } = await supabase.from("ordini").insert(batch).select();
+      
+      if (error) {
+        log(`❌ Batch ${Math.floor(i/BATCH)+1} errore: ${error.message} (code: ${error.code})`, "error");
+        // Prova uno per uno per capire quali falliscono
+        for (const row of batch) {
+          const { error: singleErr } = await supabase.from("ordini").insert(row);
+          if (singleErr) {
+            log(`  ✗ ${row.numero_ordine}: ${singleErr.message}`, "error");
+            failed++;
+          } else {
+            inserted++;
+          }
+        }
+      } else {
+        inserted += (data || []).length;
+        log(`✓ Batch ${Math.floor(i/BATCH)+1}: ${(data || []).length} ordini`, "success");
+      }
+      
       updateLoading(`Inserimento ${inserted}/${rows.length}...`, 10 + (i/rows.length)*60);
       await new Promise(r => setTimeout(r, 5));
     }
-    log(`Inseriti: ${inserted}`, "success");
+    log(`Inseriti: ${inserted}, Falliti: ${failed}`, failed ? "warning" : "success");
 
     if (keepCustom && Object.keys(customMap).length > 0) {
       updateLoading("Ripristino dati salvati...", 80);
@@ -1035,7 +746,7 @@ async function runImport(keepCustom) {
 
     hideLoading();
     cancelPreview();
-    toast(`✓ Importati ${inserted} ordini`);
+    toast(`✓ Importati ${inserted} ordini` + (failed ? ` (${failed} falliti)` : ""));
     await loadOrders();
   } catch (err) {
     hideLoading();
@@ -1114,7 +825,7 @@ async function loadOrders() {
     await loadMeta();
   } catch (err) {
     log("❌ Errore: " + err.message, "error");
-    $("ordersList").innerHTML = `<div class="empty"><i class="bi bi-exclamation-triangle"></i>Errore DB: ${escapeHtml(err.message)}</div>`;
+    $("ordersList").innerHTML = `<div class="empty"><i class="bi bi-exclamation-triangle"></i>Errore DB: ${escapeHtml(err.message)}<br><br><small>Verifica che le tabelle esistano su Supabase</small></div>`;
   }
 }
 
@@ -1158,7 +869,6 @@ function renderOrders() {
     );
   }
 
-  // Ordinamento: prima con data evasione (asc), poi senza (in fondo)
   visible.sort((a, b) => {
     const aE = a.data_evasione_grafica ? new Date(a.data_evasione_grafica).getTime() : Infinity;
     const bE = b.data_evasione_grafica ? new Date(b.data_evasione_grafica).getTime() : Infinity;
@@ -1166,7 +876,6 @@ function renderOrders() {
     return new Date(b.data_ordine || 0) - new Date(a.data_ordine || 0);
   });
 
-  // Stats
   const stats = { tot: visible.length, smistare: 0, alberto: 0, pietro: 0, samuele: 0, salvo: 0 };
   visible.forEach(o => {
     const g = (o.grafico || "").toUpperCase().replace(/\s+/g, " ").trim();
@@ -1282,7 +991,6 @@ async function deleteOrder(id) {
   );
 }
 
-// ============ CLEAR ============
 function confirmClear() {
   showModal(
     '<i class="bi bi-exclamation-triangle"></i> Svuotare il database?',
@@ -1315,7 +1023,6 @@ async function doClear() {
   } catch (e) { toast("Errore: " + e.message, "error"); }
 }
 
-// ============ MODAL ============
 function showModal(title, bodyHtml, buttons) {
   $("modalTitle").innerHTML = title;
   $("modalBody").innerHTML = bodyHtml;
@@ -1332,10 +1039,9 @@ function showModal(title, bodyHtml, buttons) {
 }
 function closeModal() { $("modalBg").classList.remove("active"); }
 
-// ============ BINDINGS ============
 function bindEvents() {
   $("debugToggle").onclick = () => $("debugPanel").classList.toggle("active");
-  $("refreshBtn").onclick = () => { log("Refresh manuale", "step"); loadOrders(); };
+  $("refreshBtn").onclick = () => { log("Refresh", "step"); loadOrders(); };
   $("clearBtn").onclick = confirmClear;
 
   $("csvFile").addEventListener("change", e => {
@@ -1351,7 +1057,6 @@ function bindEvents() {
   $("cancelImportBtn").onclick = cancelPreview;
   $("importBtn").onclick = doImport;
 
-  // Manual form toggle
   $("manualToggle").onclick = () => {
     $("manualBody").classList.toggle("active");
     const icon = $("manualToggleIcon");
@@ -1371,15 +1076,14 @@ function bindEvents() {
   $("modalBg").onclick = e => { if (e.target === $("modalBg")) closeModal(); };
 }
 
-// ============ INIT ============
-log("Avvio applicazione...", "step");
+log("Avvio...", "step");
 log(`Anno corrente: ${currentYear}`, "info");
-log(`Range Situation 3: ${currentYear} oppure 1 ott ${currentYear-1} in poi`, "info");
+log(`Range Sit.3: ${currentYear} oppure ≥ 1 ott ${currentYear-1}`, "info");
 initSupabase();
 bindEvents();
 loadOrders();
 setInterval(() => { if (supabase) loadMeta(); }, 60000);
-log("✓ Applicazione pronta", "success");
+log("✓ Pronto", "success");
 </script>
 
 </body>
