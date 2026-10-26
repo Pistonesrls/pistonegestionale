@@ -1,1 +1,782 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dashboard Ordini Grafica</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 12px;
+    padding-bottom: 100px;
+    font-size: 14px;
+    transition: background 0.3s;
+  }
+  body.stale { background: #7f1d1d; }
+  body.stale .container { background: #991b1b; }
+  body.stale header { background: #991b1b; }
+  body.stale .order-card { background: #991b1b; border-color: #fecaca; }
+  body.stale .stale-banner { display: block; }
 
+  .stale-banner {
+    display: none;
+    background: #dc2626;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+
+  .container { max-width: 800px; margin: 0 auto; }
+
+  header {
+    background: #1e293b;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  header h1 { font-size: 18px; margin-bottom: 12px; }
+  header .info { font-size: 11px; opacity: 0.7; margin-bottom: 12px; }
+
+  .controls { display: flex; flex-direction: column; gap: 8px; }
+  .controls-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  button, input[type="file"] {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+  }
+  button.primary { background: #3b82f6; color: white; }
+  button.primary:active { background: #2563eb; }
+  button.danger { background: #ef4444; color: white; }
+  button.danger:active { background: #dc2626; }
+  button.secondary { background: #475569; color: white; }
+  button.secondary:active { background: #334155; }
+
+  input[type="file"] {
+    background: #475569;
+    color: white;
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .stats {
+    background: #1e293b;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .stat-item { text-align: center; }
+  .stat-value { font-size: 20px; font-weight: bold; color: #60a5fa; }
+  .stat-label { font-size: 10px; opacity: 0.7; text-transform: uppercase; }
+
+  .order-card {
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    border-left: 4px solid #3b82f6;
+  }
+  .order-card.no-evade { border-left-color: #f59e0b; }
+  .order-card.top-priority { border-left-color: #10b981; }
+
+  .order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+  .order-num {
+    font-weight: bold;
+    font-size: 15px;
+    color: #f1f5f9;
+  }
+  .badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .badge-alberto { background: #8b5cf6; color: white; }
+  .badge-pietro { background: #06b6d4; color: white; }
+  .badge-samuele { background: #10b981; color: white; }
+  .badge-salvog { background: #64748b; color: white; }
+  .badge-smistare { background: #f59e0b; color: #0f172a; }
+  .badge-completato { background: #475569; color: white; }
+
+  .cliente {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 2px;
+  }
+  .descrizione {
+    font-size: 11px;
+    opacity: 0.6;
+    margin-bottom: 8px;
+    font-style: italic;
+  }
+  .settore-tag {
+    display: inline-block;
+    background: #334155;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+  }
+  .settore-tag.highlight { background: #f59e0b; color: #0f172a; font-weight: bold; }
+
+  .order-fields {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .field-label {
+    min-width: 85px;
+    opacity: 0.7;
+    font-size: 11px;
+  }
+  .field-input {
+    flex: 1;
+    padding: 6px 8px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: #e2e8f0;
+    font-size: 12px;
+    min-width: 0;
+  }
+  .field-input:focus { outline: none; border-color: #3b82f6; }
+  input[type="datetime-local"] { font-size: 11px; }
+  textarea.field-input { resize: vertical; min-height: 40px; }
+
+  .save-btn {
+    margin-top: 8px;
+    width: 100%;
+    padding: 8px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .save-btn:active { background: #059669; }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    padding: 20px;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 400px;
+    width: 100%;
+  }
+  .modal h3 { margin-bottom: 12px; font-size: 16px; }
+  .modal p { margin-bottom: 16px; font-size: 13px; line-height: 1.5; }
+  .modal-buttons { display: flex; gap: 8px; flex-direction: column; }
+  .modal-buttons button { flex: none; }
+
+  .filter-toggle {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: #1e293b;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+  .filter-toggle label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .filter-toggle input { width: 18px; height: 18px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    opacity: 0.6;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #10b981;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    z-index: 2000;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .toast.error { background: #ef4444; }
+  .toast.active { display: block; animation: slideUp 0.3s; }
+  @keyframes slideUp {
+    from { transform: translate(-50%, 100%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+  }
+
+  .loader {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="stale-banner" id="staleBanner">⚠️ ATTENZIONE: DATI NON AGGIORNATI<br><small>Ultimo caricamento oltre 24h fa</small></div>
+
+  <header>
+    <h1>📋 Dashboard Ordini Grafica</h1>
+    <div class="info" id="lastUpdate">Ultimo aggiornamento: caricamento...</div>
+
+    <div class="controls">
+      <input type="file" id="csvFile" accept=".csv">
+      <div class="controls-row">
+        <button class="primary" onclick="document.getElementById('csvFile').click()">📥 Carica CSV</button>
+        <button class="secondary" onclick="loadOrders()">🔄 Aggiorna</button>
+      </div>
+      <button class="danger" onclick="confirmClear()">🗑️ Svuota Database</button>
+    </div>
+  </header>
+
+  <div class="filter-toggle">
+    <label>
+      <input type="checkbox" id="filterPlotter" checked onchange="renderOrders()">
+      Mostra PLOTTER
+    </label>
+    <label>
+      <input type="checkbox" id="filterInsegne" checked onchange="renderOrders()">
+      Mostra INSEGNE
+    </label>
+    <label>
+      <input type="checkbox" id="filterFurgone" checked onchange="renderOrders()">
+      Mostra FURGONE
+    </label>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div id="ordersList"></div>
+</div>
+
+<!-- Modal conferme -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modalTitle"></h3>
+    <p id="modalText"></p>
+    <div class="modal-buttons" id="modalButtons"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://emaiswhuznyqkzzzelvh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_7xF7dZXBDOahRmdanK-cFw_jx0sO0Cw';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let allOrders = [];
+const currentYear = new Date().getFullYear();
+
+// ============ UTILS ============
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast active' + (isError ? ' error' : '');
+  setTimeout(() => t.classList.remove('active'), 3000);
+}
+
+function showModal(title, text, buttons) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalText').textContent = text;
+  const btns = document.getElementById('modalButtons');
+  btns.innerHTML = '';
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.textContent = b.label;
+    btn.className = b.class || 'secondary';
+    btn.onclick = () => {
+      closeModal();
+      b.action();
+    };
+    btns.appendChild(btn);
+  });
+  document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+// ============ PARSING CSV ============
+function parseCSV(text) {
+  const rows = [];
+  let currentRow = [];
+  let currentField = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') {
+      if (inQuotes && text[i+1] === '"') {
+        currentField += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (c === ',' && !inQuotes) {
+      currentRow.push(currentField);
+      currentField = '';
+    } else if ((c === '\n' || c === '\r') && !inQuotes) {
+      if (c === '\r' && text[i+1] === '\n') i++;
+      if (currentField || currentRow.length > 0) {
+        currentRow.push(currentField);
+        rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+      }
+    } else {
+      currentField += c;
+    }
+  }
+  if (currentField || currentRow.length > 0) {
+    currentRow.push(currentField);
+    rows.push(currentRow);
+  }
+
+  // Rimuovi righe vuote o di solo separatori
+  return rows.filter(r => r.some(f => f && f.trim()));
+}
+
+function parseItalianDate(str) {
+  if (!str) return null;
+  const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (!m) return null;
+  let year = parseInt(m[3]);
+  if (year < 100) year += 2000;
+  return new Date(year, parseInt(m[2]) - 1, parseInt(m[1]));
+}
+
+// ============ FILTRI ============
+function shouldIncludeOrder(row) {
+  // Colonne: 1=data, 2=operatore, 3=numero, 4=stato, 5=grafico, 6=data evasione, 7=cliente, 8=note, 9=prezzo, 10=settore
+  // Nel CSV reale: index 1=data ordine, 2=operatore, 3=numero, 4=stato, 5=grafico, 6=data evasione, 7=cliente, 8=note, 10=settore
+  if (row.length < 9) return false;
+
+  const dataOrdineStr = (row[1] || '').trim();
+  const numeroOrdine = (row[3] || '').trim();
+  const stato = (row[4] || '').trim();
+  const grafico = (row[5] || '').trim().toUpperCase();
+  const settore = (row[10] || (row[9] || '')).trim().toUpperCase();
+
+  const dataOrdine = parseItalianDate(dataOrdineStr);
+  if (!dataOrdine) return false;
+
+  // 1. Escludi Annullati
+  if (stato.toLowerCase().includes('annullato')) return false;
+
+  // 2. Solo Da confermare o Confermato
+  const statoLower = stato.toLowerCase();
+  if (!statoLower.includes('da confermare') && !statoLower.includes('confermato')) return false;
+
+  // 3. Escludi SOSPESO
+  if (statoLower.includes('sospeso') || grafico === 'SOSPESO' || (row[6] || '').toUpperCase().includes('SOSPESO')) return false;
+  // Controllo anche note
+  if ((row[8] || '').toUpperCase().includes('SOSPESO')) return false;
+
+  // 4. Escludi /B
+  if (numeroOrdine.toUpperCase().includes('/B')) return false;
+
+  // 5. Grafico valido
+  const graficoClean = grafico.replace(/\s+/g, ' ').trim();
+  const graficiValidi = ['ALBERTO', 'ALBERTO - COMPLETATO', 'PIETRO', 'PIETRO - COMPLETATO', 'COMPLETATO', 'SAMUELE', 'SAMUELE - COMPLETATO'];
+  if (graficoClean && !graficiValidi.includes(graficoClean)) {
+    return false;
+  }
+
+  // 6. Escludi SALVO G. - COMPLETATO e FABRIS / FABRIS - COMPLETATO
+  if (graficoClean.includes('SALVO G.') || graficoClean.includes('FABRIS')) return false;
+
+  // 7. Filtro anno (precedente, attuale, successivo)
+  const year = dataOrdine.getFullYear();
+  if (year < currentYear - 1 || year > currentYear + 1) return false;
+
+  return true;
+}
+
+function getDisplayGrafico(grafico) {
+  const g = (grafico || '').toUpperCase().trim();
+  if (!g) return { name: 'Da smistare', class: 'badge-smistare' };
+  if (g === 'COMPLETATO') return { name: 'Salvo G.', class: 'badge-salvog' };
+  if (g.includes('ALBERTO')) return { name: 'Alberto', class: 'badge-alberto' };
+  if (g.includes('PIETRO')) return { name: 'Pietro', class: 'badge-pietro' };
+  if (g.includes('SAMUELE')) return { name: 'Samuele', class: 'badge-samuele' };
+  return { name: g, class: 'badge-completato' };
+}
+
+// ============ CARICAMENTO CSV ============
+document.getElementById('csvFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const text = await file.text();
+  const rows = parseCSV(text);
+  const filtered = rows.filter(shouldIncludeOrder).map(row => ({
+    numero_ordine: row[3].trim(),
+    data_ordine_str: row[1].trim(),
+    data_ordine: parseItalianDate(row[1].trim()),
+    cliente: (row[7] || '').trim(),
+    grafico: (row[5] || '').trim(),
+    stato: (row[4] || '').trim(),
+    settore: (row[10] || row[9] || '').trim(),
+    note_csv: (row[8] || '').trim()
+  }));
+
+  if (filtered.length === 0) {
+    showToast('Nessun ordine valido trovato nel CSV', true);
+    return;
+  }
+
+  // Controlla conflitti
+  const { data: existing } = await supabase.from('ordini').select('numero_ordine, anno_ordine, note_interne, descrizione_breve, data_evasione_grafica');
+  const existingMap = {};
+  (existing || []).forEach(o => {
+    existingMap[`${o.numero_ordine}_${o.anno_ordine}`] = o;
+  });
+
+  const hasCustomData = filtered.some(o => {
+    const key = `${o.numero_ordine}_${o.data_ordine.getFullYear()}`;
+    const ex = existingMap[key];
+    return ex && (ex.note_interne || ex.descrizione_breve || ex.data_evasione_grafica);
+  });
+
+  if (hasCustomData) {
+    showModal(
+      '⚠️ Dati esistenti',
+      'Alcuni ordini hanno note, descrizioni o date evasione inserite manualmente. Come vuoi procedere?',
+      [
+        { label: '✅ Mantieni dati esistenti (non sovrascrivere)', class: 'secondary', action: () => importOrders(filtered, false) },
+        { label: '🔄 Sovrascrivi tutto (perderai note/descrizioni)', class: 'danger', action: () => importOrders(filtered, true) },
+        { label: '❌ Annulla', class: 'secondary', action: () => {} }
+      ]
+    );
+  } else {
+    importOrders(filtered, true);
+  }
+});
+
+async function importOrders(orders, overwrite) {
+  showToast('Caricamento in corso...');
+
+  // Raggruppa per numero+anno, mantieni solo anno corrente se duplicati
+  const grouped = {};
+  orders.forEach(o => {
+    const year = o.data_ordine.getFullYear();
+    const key = o.numero_ordine;
+    if (!grouped[key] || year === currentYear) {
+      grouped[key] = o;
+    }
+  });
+  const uniqueOrders = Object.values(grouped);
+
+  try {
+    // Se sovrascrivi, cancella prima
+    if (overwrite) {
+      const nums = uniqueOrders.map(o => o.numero_ordine);
+      await supabase.from('ordini').delete().in('numero_ordine', nums);
+    }
+
+    // Inserisci uno per uno (per gestire UNIQUE constraint)
+    let inserted = 0;
+    let skipped = 0;
+    for (const o of uniqueOrders) {
+      const record = {
+        numero_ordine: o.numero_ordine,
+        anno_ordine: o.data_ordine.getFullYear(),
+        cliente: o.cliente,
+        data_ordine: o.data_ordine.toISOString().split('T')[0],
+        grafico: o.grafico,
+        stato: o.stato,
+        settore: o.settore
+      };
+
+      const { error } = await supabase.from('ordini').insert(record);
+      if (error) {
+        if (error.code === '23505') { // duplicate
+          skipped++;
+        } else {
+          console.error(error);
+        }
+      } else {
+        inserted++;
+      }
+    }
+
+    // Aggiorna timestamp
+    await supabase.from('meta').update({ ultima_importazione: new Date().toISOString() }).eq('id', 1);
+
+    showToast(`✅ Inseriti: ${inserted} | Saltati: ${skipped}`);
+    loadOrders();
+  } catch (err) {
+    showToast('Errore: ' + err.message, true);
+  }
+}
+
+// ============ CARICAMENTO ORDINI ============
+async function loadOrders() {
+  const { data, error } = await supabase
+    .from('ordini')
+    .select('*')
+    .order('data_evasione_grafica', { ascending: true, nullsFirst: true })
+    .order('data_ordine', { ascending: false });
+
+  if (error) {
+    showToast('Errore caricamento: ' + error.message, true);
+    return;
+  }
+
+  allOrders = data || [];
+  renderOrders();
+  await loadMeta();
+}
+
+async function loadMeta() {
+  const { data } = await supabase.from('meta').select('ultima_importazione').eq('id', 1).single();
+  if (data && data.ultima_importazione) {
+    const date = new Date(data.ultima_importazione);
+    const now = new Date();
+    const diffHours = (now - date) / (1000 * 60 * 60);
+    document.getElementById('lastUpdate').innerHTML =
+      `Ultimo aggiornamento: <strong>${date.toLocaleString('it-IT')}</strong>`;
+
+    if (diffHours > 24) {
+      document.body.classList.add('stale');
+    } else {
+      document.body.classList.remove('stale');
+    }
+  }
+}
+
+// ============ RENDERING ============
+function renderOrders() {
+  const list = document.getElementById('ordersList');
+  const filterP = document.getElementById('filterPlotter').checked;
+  const filterI = document.getElementById('filterInsegne').checked;
+  const filterF = document.getElementById('filterFurgone').checked;
+
+  let visible = allOrders.filter(o => {
+    const s = (o.settore || '').toUpperCase();
+    if (s.includes('PLOTTER') && !filterP) return false;
+    if (s.includes('INSEGNE') && !filterI) return false;
+    if (s.includes('FURGONE') && !filterF) return false;
+    return true;
+  });
+
+  // Ordina: prima quelli senza data evasione, poi per data
+  visible.sort((a, b) => {
+    if (!a.data_evasione_grafica && b.data_evasione_grafica) return -1;
+    if (a.data_evasione_grafica && !b.data_evasione_grafica) return 1;
+    if (a.data_evasione_grafica && b.data_evasione_grafica) {
+      return new Date(a.data_evasione_grafica) - new Date(b.data_evasione_grafica);
+    }
+    return new Date(b.data_ordine) - new Date(a.data_ordine);
+  });
+
+  // Stats
+  const stats = {
+    totale: visible.length,
+    daSmistare: visible.filter(o => !o.grafico).length,
+    alberto: visible.filter(o => (o.grafico || '').toUpperCase().includes('ALBERTO')).length,
+    pietro: visible.filter(o => (o.grafico || '').toUpperCase().includes('PIETRO')).length,
+    samuele: visible.filter(o => (o.grafico || '').toUpperCase().includes('SAMUELE')).length,
+    salvoG: visible.filter(o => (o.grafico || '').toUpperCase() === 'COMPLETATO').length
+  };
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-item"><div class="stat-value">${stats.totale}</div><div class="stat-label">Totale</div></div>
+    <div class="stat-item"><div class="stat-value" style="color:#f59e0b">${stats.daSmistare}</div><div class="stat-label">Da smistare</div></div>
+    <div class="stat-item"><div class="stat-value" style="color:#8b5cf6">${stats.alberto}</div><div class="stat-label">Alberto</div></div>
+    <div class="stat-item"><div class="stat-value" style="color:#06b6d4">${stats.pietro}</div><div class="stat-label">Pietro</div></div>
+    <div class="stat-item"><div class="stat-value" style="color:#10b981">${stats.samuele}</div><div class="stat-label">Samuele</div></div>
+    <div class="stat-item"><div class="stat-value" style="color:#64748b">${stats.salvoG}</div><div class="stat-label">Salvo G.</div></div>
+  `;
+
+  if (visible.length === 0) {
+    list.innerHTML = '<div class="empty-state">📭 Nessun ordine da visualizzare</div>';
+    return;
+  }
+
+  list.innerHTML = visible.map(o => {
+    const g = getDisplayGrafico(o.grafico);
+    const settore = (o.settore || '').toUpperCase();
+    const hasEvasione = !!o.data_evasione_grafica;
+    let priorityClass = '';
+    if (!hasEvasione) priorityClass = 'no-evade';
+    else if (new Date(o.data_evasione_grafica) <= new Date()) priorityClass = 'top-priority';
+
+    const settoriHighlight = ['PLOTTER', 'INSEGNE', 'FURGONE'];
+    const settoreHtml = settore ?
+      `<span class="settore-tag ${settoriHighlight.some(s => settore.includes(s)) ? 'highlight' : ''}">${o.settore}</span>` : '';
+
+    const dataEvasioneVal = o.data_evasione_grafica ?
+      new Date(o.data_evasione_grafica).toISOString().slice(0, 16) : '';
+
+    return `
+      <div class="order-card ${priorityClass}" data-id="${o.id}">
+        <div class="order-header">
+          <div>
+            <div class="order-num">Ordine n. ${o.numero_ordine}</div>
+            <div style="font-size:11px;opacity:0.6;margin-top:2px;">📅 ${new Date(o.data_ordine).toLocaleDateString('it-IT')}</div>
+          </div>
+          <span class="badge ${g.class}">${g.name}</span>
+        </div>
+        <div class="cliente">${o.cliente || 'N/D'}</div>
+        ${o.descrizione_breve ? `<div class="descrizione">${escapeHtml(o.descrizione_breve)}</div>` : `<div class="descrizione" style="opacity:0.4;font-style:italic;">Aggiungi descrizione breve...</div>`}
+        ${settoreHtml}
+
+        <div class="order-fields">
+          <div class="field-row">
+            <span class="field-label">Evasione grafica:</span>
+            <input type="datetime-local" class="field-input" id="evade_${o.id}" value="${dataEvasioneVal}">
+          </div>
+          <div class="field-row" style="align-items:flex-start;">
+            <span class="field-label" style="margin-top:6px;">Descrizione:</span>
+            <textarea class="field-input" id="desc_${o.id}" placeholder="Descrizione breve visibile...">${escapeHtml(o.descrizione_breve || '')}</textarea>
+          </div>
+          <div class="field-row" style="align-items:flex-start;">
+            <span class="field-label" style="margin-top:6px;">Note interne:</span>
+            <textarea class="field-input" id="note_${o.id}" placeholder="Note interne...">${escapeHtml(o.note_interne || '')}</textarea>
+          </div>
+          <button class="save-btn" onclick="saveOrder(${o.id})">💾 Salva modifiche</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ============ SALVATAGGIO ============
+async function saveOrder(id) {
+  const evasione = document.getElementById(`evade_${id}`).value;
+  const desc = document.getElementById(`desc_${id}`).value;
+  const note = document.getElementById(`note_${id}`).value;
+
+  const update = {
+    descrizione_breve: desc,
+    note_interne: note,
+    data_evasione_grafica: evasione ? new Date(evasione).toISOString() : null
+  };
+
+  const { error } = await supabase.from('ordini').update(update).eq('id', id);
+  if (error) {
+    showToast('Errore salvataggio: ' + error.message, true);
+  } else {
+    showToast('✅ Salvato');
+    // Aggiorna array locale
+    const ord = allOrders.find(o => o.id === id);
+    if (ord) {
+      ord.descrizione_breve = desc;
+      ord.note_interne = note;
+      ord.data_evasione_grafica = update.data_evasione_grafica;
+    }
+    renderOrders();
+  }
+}
+
+// ============ SVUOTA DATABASE ============
+function confirmClear() {
+  showModal(
+    '🗑️ Conferma svuotamento',
+    'Sei sicuro di voler cancellare TUTTI gli ordini dal database? Questa azione è irreversibile.',
+    [
+      { label: '⚠️ Sì, svuota tutto', class: 'danger', action: doClear },
+      { label: '❌ Annulla', class: 'secondary', action: () => {} }
+    ]
+  );
+}
+
+async function doClear() {
+  showToast('Svuotamento in corso...');
+  const { error } = await supabase.from('ordini').delete().neq('id', -1);
+  if (error) {
+    showToast('Errore: ' + error.message, true);
+    return;
+  }
+  await supabase.from('meta').update({ ultima_importazione: new Date().toISOString() }).eq('id', 1);
+  showToast('🗑️ Database svuotato');
+  allOrders = [];
+  renderOrders();
+  loadMeta();
+}
+
+// ============ INIT ============
+loadOrders();
+</script>
+
+</body>
+</html>
