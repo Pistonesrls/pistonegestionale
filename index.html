@@ -7,7 +7,44 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// Intercetto errori anche prima del caricamento dello script principale
+window.__bootErrors = [];
+
+window.addEventListener("error", function (e) {
+  window.__bootErrors.push("Errore JS: " + (e.message || "sconosciuto") + " (riga " + (e.lineno || "?") + ")");
+});
+
+window.addEventListener("unhandledrejection", function (e) {
+  var msg = e && e.reason ? (e.reason.message || String(e.reason)) : "errore promise";
+  window.__bootErrors.push("Errore async: " + msg);
+});
+
+// Questa funzione viene chiamata dall'input file nativo.
+// Se lo script principale non è caricato, almeno te lo dice.
+function __fileChanged(input) {
+  var status = document.getElementById("fileStatus");
+  var name = input && input.files && input.files[0] ? input.files[0].name : "nessun file";
+
+  if (status) {
+    status.textContent = "File selezionato: " + name;
+  }
+
+  if (typeof window.handleFileSelected === "function") {
+    window.handleFileSelected(input.files[0]);
+  } else {
+    var log = document.getElementById("logBox");
+    if (log) {
+      var div = document.createElement("div");
+      div.className = "log-error";
+      div.textContent = "[ERRORE] Script principale non caricato.";
+      log.appendChild(div);
+    }
+    alert("Script principale non caricato. Guarda il log nella pagina.");
+  }
+}
+</script>
 
 <style>
 :root {
@@ -15,7 +52,7 @@
   --bg-soft: #f8f9fa;
   --border: #e5e7eb;
   --text: #111827;
-  --text-muted: #6b7280;
+  --muted: #6b7280;
   --accent: #2563eb;
   --success: #059669;
   --danger: #dc2626;
@@ -25,7 +62,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   background: var(--bg);
   color: var(--text);
   padding: 16px;
@@ -35,28 +72,27 @@ body {
 body.stale { background: #fef2f2; }
 body.stale .stale-banner { display: block; }
 
-.container { max-width: 860px; margin: 0 auto; }
+.container { max-width: 880px; margin: 0 auto; }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 h1 {
   font-size: 20px;
-  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .subtitle {
-  font-size: 12px;
-  color: var(--text-muted);
   margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .header-actions { display: flex; gap: 8px; }
@@ -71,28 +107,9 @@ h1 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--text);
 }
 
 .icon-btn.danger { color: var(--danger); }
-
-button {
-  font-family: inherit;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.btn-primary { background: var(--accent); color: #fff; padding: 10px 14px; }
-.btn-success { background: var(--success); color: #fff; padding: 10px 14px; }
-.btn-danger { background: var(--danger); color: #fff; padding: 10px 14px; }
-.btn-ghost { background: #fff; border: 1px solid var(--border); color: var(--text); padding: 10px 14px; }
-.btn-small { padding: 7px 10px; font-size: 12px; }
 
 .stale-banner {
   display: none;
@@ -112,33 +129,70 @@ button {
   margin-top: 4px;
 }
 
-.debug-panel {
-  display: none;
+.status-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.file-input-wrap {
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.file-input-wrap input[type="file"] {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.dropzone {
+  border: 2px dashed #cbd5e1;
+  background: #fff;
+  border-radius: 12px;
+  padding: 22px 14px;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.dropzone.dragover {
+  border-color: var(--accent);
+  background: #eff6ff;
+}
+
+.log-box {
   background: #0f172a;
   color: #e2e8f0;
   border-radius: 10px;
   padding: 12px;
   font-family: monospace;
   font-size: 11px;
-  max-height: 280px;
+  max-height: 260px;
   overflow: auto;
-  margin: 10px 0 16px;
+  margin-bottom: 14px;
 }
 
-.debug-panel.active { display: block; }
-.debug-panel .info { color: #93c5fd; }
-.debug-panel .success { color: #86efac; }
-.debug-panel .warning { color: #fde047; }
-.debug-panel .error { color: #fca5a5; }
-.debug-panel .step { color: #c4b5fd; font-weight: 700; }
+.log-info { color: #93c5fd; }
+.log-success { color: #86efac; }
+.log-warning { color: #fde047; }
+.log-error { color: #fca5a5; }
+.log-step { color: #c4b5fd; font-weight: 700; }
 
 .loading {
   display: none;
   border: 1px solid #bfdbfe;
   background: #eff6ff;
   border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 14px;
+  margin-bottom: 14px;
 }
 
 .loading.active { display: block; }
@@ -170,38 +224,29 @@ button {
   transition: width 0.2s ease;
 }
 
-label.dropzone {
-  display: block;
-  border: 2px dashed #cbd5e1;
-  background: var(--bg-soft);
-  border-radius: 12px;
-  padding: 28px 16px;
-  text-align: center;
+button {
+  font-family: inherit;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  margin-bottom: 16px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
-label.dropzone.dragover {
-  border-color: var(--accent);
-  background: #eff6ff;
-}
-
-.dropzone-icon {
-  font-size: 30px;
-  color: #94a3b8;
-  display: block;
-  margin-bottom: 8px;
-}
-
-.dropzone-label { font-weight: 700; }
-.dropzone-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.btn-primary { background: var(--accent); color: #fff; padding: 10px 14px; }
+.btn-success { background: var(--success); color: #fff; padding: 10px 14px; }
+.btn-danger { background: var(--danger); color: #fff; padding: 10px 14px; }
+.btn-ghost { background: #fff; border: 1px solid var(--border); color: var(--text); padding: 10px 14px; }
 
 .preview {
   display: none;
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 14px;
   background: var(--bg-soft);
+  padding: 14px;
   margin-bottom: 16px;
 }
 
@@ -231,7 +276,7 @@ label.dropzone.dragover {
 }
 
 .stat-mini .num { font-size: 22px; font-weight: 800; display: block; }
-.stat-mini .lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+.stat-mini .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; }
 .num-ok { color: var(--success); }
 .num-skip { color: #9ca3af; }
 
@@ -255,7 +300,7 @@ label.dropzone.dragover {
 }
 
 .reason:last-child { border-bottom: none; }
-.reason-count { font-weight: 700; color: var(--text-muted); }
+.reason-count { font-weight: 700; color: var(--muted); }
 
 .preview-actions {
   display: grid;
@@ -263,13 +308,9 @@ label.dropzone.dragover {
   gap: 8px;
 }
 
-.toolbar {
-  margin-bottom: 14px;
-}
+.toolbar { margin-bottom: 14px; }
 
-.search-wrap {
-  position: relative;
-}
+.search-wrap { position: relative; }
 
 .search-wrap i {
   position: absolute;
@@ -313,7 +354,7 @@ label.dropzone.dragover {
 }
 
 .stat-card .n { font-size: 18px; font-weight: 800; display: block; }
-.stat-card .l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+.stat-card .l { font-size: 10px; color: var(--muted); text-transform: uppercase; }
 
 .card {
   border: 1px solid var(--border);
@@ -343,7 +384,7 @@ label.dropzone.dragover {
 
 .order-date {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--muted);
   margin-top: 3px;
 }
 
@@ -355,7 +396,7 @@ label.dropzone.dragover {
 
 .desc {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--muted);
   font-style: italic;
   margin-top: 2px;
 }
@@ -407,7 +448,7 @@ label.dropzone.dragover {
 
 .field label {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--muted);
   font-weight: 700;
   padding-top: 8px;
 }
@@ -441,7 +482,7 @@ label.dropzone.dragover {
 .empty {
   text-align: center;
   padding: 40px 16px;
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 .empty i {
@@ -472,22 +513,16 @@ label.dropzone.dragover {
   max-width: 430px;
 }
 
-.modal h3 {
-  font-size: 16px;
-  margin-bottom: 10px;
-}
+.modal h3 { font-size: 16px; margin-bottom: 10px; }
 
 .modal-body {
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--muted);
   line-height: 1.6;
   margin-bottom: 16px;
 }
 
-.modal-actions {
-  display: grid;
-  gap: 8px;
-}
+.modal-actions { display: grid; gap: 8px; }
 
 .toast {
   position: fixed;
@@ -530,25 +565,26 @@ label.dropzone.dragover {
     </div>
   </div>
 
-  <button class="btn-ghost btn-small" id="logToggle">
-    <i class="bi bi-terminal"></i> Mostra / nascondi log
-  </button>
+  <div class="status-box" id="fileStatus">In attesa di caricamento file...</div>
 
-  <div class="debug-panel active" id="debugPanel"></div>
+  <div class="file-input-wrap">
+    <strong>Caricamento CSV</strong><br><br>
+    <input type="file" id="csvFile" accept=".csv,.txt,text/csv" onchange="__fileChanged(this)">
+  </div>
+
+  <div class="dropzone" id="dropzone">
+    <i class="bi bi-cloud-arrow-up" style="font-size:28px;color:#94a3b8;"></i>
+    <div style="font-weight:700;margin-top:6px;">Trascina qui il CSV</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:4px;">oppure usa il campo qui sopra</div>
+  </div>
+
+  <div class="log-box" id="logBox"></div>
 
   <div class="loading" id="loadingBox">
     <div class="loading-title" id="loadingTitle">Elaborazione...</div>
     <div class="loading-status" id="loadingStatus"></div>
     <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
   </div>
-
-  <label for="csvFile" class="dropzone" id="dropzone">
-    <span class="dropzone-icon"><i class="bi bi-cloud-arrow-up"></i></span>
-    <span class="dropzone-label">Clicca qui per caricare il CSV di Danea</span>
-    <span class="dropzone-sub">oppure trascina il file in quest’area</span>
-  </label>
-
-  <input type="file" id="csvFile" accept=".csv,.txt,text/csv" style="display:none;">
 
   <div class="preview" id="preview">
     <h3><i class="bi bi-clipboard-data"></i> Anteprima filtraggio</h3>
@@ -584,1031 +620,1121 @@ label.dropzone.dragover {
 </div>
 
 <script>
-"use strict";
+(function () {
+  "use strict";
 
-const SUPABASE_URL = "https://emaiswhuznyqkzzzelvh.supabase.co";
-const SUPABASE_KEY = "sb_publishable_7xF7dZXBDOahRmdanK-cFw_jx0sO0Cw";
+  var SUPABASE_URL = "https://emaiswhuznyqkzzzelvh.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_7xF7dZXBDOahRmdanK-cFw_jx0sO0Cw";
 
-const currentYear = new Date().getFullYear();
+  var currentYear = new Date().getFullYear();
+  var allOrders = [];
+  var pendingImport = null;
+  var customMap = {};
+  var supabaseClient = null;
 
-let supabase = null;
-let allOrders = [];
-let pendingImport = null;
-let customMap = {};
+  var VALID_GRAFICI = {
+    "": true,
+    "ALBERTO": true,
+    "ALBERTO - COMPLETATO": true,
+    "PIETRO": true,
+    "PIETRO - COMPLETATO": true,
+    "COMPLETATO": true,
+    "SAMUELE": true,
+    "SAMUELE - COMPLETATO": true
+  };
 
-const VALID_GRAFICI = new Set([
-  "",
-  "ALBERTO",
-  "ALBERTO - COMPLETATO",
-  "PIETRO",
-  "PIETRO - COMPLETATO",
-  "COMPLETATO",
-  "SAMUELE",
-  "SAMUELE - COMPLETATO"
-]);
-
-const $ = (id) => document.getElementById(id);
-const tick = () => new Promise(resolve => setTimeout(resolve, 0));
-
-function log(message, type = "info") {
-  const panel = $("debugPanel");
-  if (!panel) return;
-
-  const time = new Date().toLocaleTimeString("it-IT", { hour12: false });
-  const row = document.createElement("div");
-  row.className = type;
-  row.textContent = `[${time}] ${message}`;
-  panel.appendChild(row);
-  panel.scrollTop = panel.scrollHeight;
-  console.log(`[${type.toUpperCase()}] ${message}`);
-}
-
-function toast(message, type = "success") {
-  const el = document.createElement("div");
-  el.className = `toast ${type}`;
-  const icon = type === "error" ? "bi-x-circle-fill" : "bi-check-circle-fill";
-  el.innerHTML = `<i class="bi ${icon}"></i> ${escapeHtml(message)}`;
-  document.body.appendChild(el);
-
-  setTimeout(() => {
-    el.style.opacity = "0";
-    setTimeout(() => el.remove(), 350);
-  }, 2600);
-}
-
-function showLoading(title, status = "", percent = 0) {
-  $("loadingBox").classList.add("active");
-  $("loadingTitle").textContent = title;
-  $("loadingStatus").textContent = status;
-  $("progressFill").style.width = `${percent}%`;
-}
-
-function updateLoading(status, percent) {
-  $("loadingStatus").textContent = status;
-  $("progressFill").style.width = `${percent}%`;
-}
-
-function hideLoading() {
-  $("loadingBox").classList.remove("active");
-}
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function readFileAsArrayBuffer(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Lettura del file non riuscita"));
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-async function decodeFile(file) {
-  const buffer = await readFileAsArrayBuffer(file);
-
-  let text;
-  try {
-    text = new TextDecoder("utf-8").decode(buffer);
-  } catch (error) {
-    text = new TextDecoder().decode(buffer);
+  function $(id) {
+    return document.getElementById(id);
   }
 
-  const badUtf8 = (text.match(/\uFFFD/g) || []).length;
+  function wait(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
 
-  if (badUtf8 > 0) {
-    try {
-      const alt = new TextDecoder("windows-1252").decode(buffer);
-      const badAlt = (alt.match(/\uFFFD/g) || []).length;
-      if (badAlt <= badUtf8) text = alt;
-    } catch (error) {
-      // tieni UTF-8
+  function log(message, type) {
+    var box = $("logBox");
+    if (box) {
+      var div = document.createElement("div");
+      div.className = "log-" + (type || "info");
+      div.textContent = "[" + new Date().toLocaleTimeString("it-IT", { hour12: false }) + "] " + message;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+    if (window.console) {
+      console.log("[" + (type || "info").toUpperCase() + "] " + message);
     }
   }
 
-  return text.replace(/^\uFEFF/, "");
-}
+  function setStatus(text) {
+    var el = $("fileStatus");
+    if (el) el.textContent = text;
+  }
 
-function parseCsv(text, delimiter) {
-  const fields = [];
-  let field = "";
-  let inQuotes = false;
+  function showLoading(title, status, percent) {
+    $("loadingBox").classList.add("active");
+    $("loadingTitle").textContent = title;
+    $("loadingStatus").textContent = status || "";
+    $("progressFill").style.width = (percent || 0) + "%";
+  }
 
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
+  function updateLoading(status, percent) {
+    $("loadingStatus").textContent = status || "";
+    $("progressFill").style.width = (percent || 0) + "%";
+  }
 
-    if (char === '"') {
-      if (inQuotes && text[i + 1] === '"') {
-        field += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
+  function hideLoading() {
+    $("loadingBox").classList.remove("active");
+  }
+
+  function toast(message, type) {
+    var el = document.createElement("div");
+    el.className = "toast " + (type || "success");
+    var icon = type === "error" ? "bi-x-circle-fill" : "bi-check-circle-fill";
+    el.innerHTML = '<i class="bi ' + icon + '"></i> ' + escapeHtml(message);
+    document.body.appendChild(el);
+
+    setTimeout(function () {
+      el.style.opacity = "0";
+      setTimeout(function () {
+        el.remove();
+      }, 350);
+    }, 2600);
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // ==========================
+  // SUPABASE caricato dynamic
+  // ==========================
+  function ensureSupabase() {
+    return new Promise(function (resolve, reject) {
+      if (supabaseClient) {
+        resolve(supabaseClient);
+        return;
       }
-      continue;
-    }
 
-    if (!inQuotes && char === delimiter) {
-      fields.push(field.trim());
-      field = "";
-      continue;
-    }
-
-    if (!inQuotes && (char === "\n" || char === "\r")) {
-      if (char === "\r" && text[i + 1] === "\n") i++;
-      fields.push(field.trim());
-      field = "";
-      continue;
-    }
-
-    if (inQuotes && (char === "\n" || char === "\r")) {
-      field += " ";
-      continue;
-    }
-
-    field += char;
-  }
-
-  fields.push(field.trim());
-  return fields;
-}
-
-function parseItalianDate(value) {
-  const s = String(value || "").trim();
-  const match = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-  if (!match) return null;
-
-  const day = parseInt(match[1], 10);
-  const month = parseInt(match[2], 10);
-  let year = parseInt(match[3], 10);
-
-  if (year < 100) year += 2000;
-  if (month < 1 || month > 12) return null;
-
-  const date = new Date(year, month - 1, day);
-  if (isNaN(date.getTime())) return null;
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
-
-  return date;
-}
-
-function isItalianDate(value) {
-  return parseItalianDate(value) !== null;
-}
-
-function looksLikeStato(value) {
-  const s = String(value || "").toLowerCase();
-  return (
-    s.includes("annullato") ||
-    s.includes("confermato") ||
-    s.includes("confermare") ||
-    s.includes("concluso") ||
-    s.includes("sospeso") ||
-    s.includes("parz")
-  );
-}
-
-function findOrderStarts(fields) {
-  const starts = [];
-
-  for (let i = 0; i + 3 < fields.length; i++) {
-    if (!isItalianDate(fields[i])) continue;
-
-    const numero = String(fields[i + 2] || "").trim();
-    const stato = String(fields[i + 3] || "").trim();
-
-    if (numero && looksLikeStato(stato)) {
-      starts.push(i);
-    }
-  }
-
-  return starts;
-}
-
-function parseDaneaCsv(text) {
-  const delimiters = [",", ";", "\t"];
-  let best = null;
-
-  for (const delimiter of delimiters) {
-    const fields = parseCsv(text, delimiter);
-    const starts = findOrderStarts(fields);
-
-    if (!best || starts.length > best.starts.length) {
-      best = { fields, starts, delimiter };
-    }
-  }
-
-  if (!best) {
-    best = { fields: [], starts: [], delimiter: "," };
-  }
-
-  const records = [];
-
-  for (let i = 0; i < best.starts.length; i++) {
-    const start = best.starts[i];
-    const end = i + 1 < best.starts.length ? best.starts[i + 1] : best.fields.length;
-    const row = best.fields.slice(start, end);
-
-    if (row.length < 7) continue;
-
-    records.push({
-      data: row[0] || "",
-      operatore: row[1] || "",
-      numero: row[2] || "",
-      stato: row[3] || "",
-      grafico: row[4] || "",
-      dataEvasioneCsv: row[5] || "",
-      cliente: row[6] || "",
-      noteCsv: row[7] || "",
-      prezzo: row[8] || "",
-      settore: row[9] || ""
-    });
-  }
-
-  return {
-    fields: best.fields,
-    starts: best.starts,
-    records,
-    delimiter: best.delimiter
-  };
-}
-
-function normalizeGrafico(value) {
-  return String(value || "")
-    .toUpperCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function filterOrders(records) {
-  const reasons = {};
-  const validRaw = [];
-
-  const addReason = (reason) => {
-    reasons[reason] = (reasons[reason] || 0) + 1;
-  };
-
-  records.forEach((record) => {
-    const date = parseItalianDate(record.data);
-    if (!date) {
-      addReason("Data non valida");
-      return;
-    }
-
-    const stato = String(record.stato || "").toLowerCase();
-    const grafico = normalizeGrafico(record.grafico);
-    const numero = String(record.numero || "").toUpperCase().trim();
-    const year = date.getFullYear();
-
-    if (stato.includes("annullato")) {
-      addReason("Annullato");
-      return;
-    }
-
-    if (!(stato.includes("confermato") || stato.includes("confermare"))) {
-      addReason(`Stato escluso: ${record.stato || "n/d"}`);
-      return;
-    }
-
-    if (grafico === "SOSPESO" || stato.includes("sospeso")) {
-      addReason("Sospeso");
-      return;
-    }
-
-    if (numero.includes("/B")) {
-      addReason("Numero /B");
-      return;
-    }
-
-    if (!VALID_GRAFICI.has(grafico)) {
-      addReason(`Grafico escluso: ${record.grafico || "n/d"}`);
-      return;
-    }
-
-    if (year < currentYear - 1 || year > currentYear + 1) {
-      addReason(`Anno escluso: ${year}`);
-      return;
-    }
-
-    validRaw.push({
-      numero_ordine: record.numero.trim(),
-      anno_ordine: year,
-      cliente: record.cliente.trim() || "Cliente",
-      data_ordine: `${year}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
-      grafico: record.grafico.trim(),
-      stato: record.stato.trim(),
-      settore: record.settore.trim()
-    });
-  });
-
-  const unique = new Map();
-  let duplicates = 0;
-
-  validRaw.forEach((order) => {
-    const key = `${order.numero_ordine}_${order.anno_ordine}`;
-    if (unique.has(key)) duplicates++;
-    unique.set(key, order);
-  });
-
-  if (duplicates > 0) reasons["Duplicati"] = duplicates;
-
-  const valid = Array.from(unique.values());
-
-  return {
-    total: records.length,
-    valid,
-    validCount: valid.length,
-    skipCount: records.length - valid.length,
-    reasons
-  };
-}
-
-async function handleFile(file) {
-  try {
-    log(`File selezionato: ${file.name} (${file.size} byte)`, "step");
-    showLoading("Lettura file", "Carico il CSV...", 10);
-    await tick();
-
-    const text = await decodeFile(file);
-    log(`File letto: ${text.length} caratteri`, "success");
-
-    updateLoading("Analisi CSV...", 35);
-    await tick();
-
-    const parsed = parseDaneaCsv(text);
-
-    log(`Delimitatore rilevato: "${parsed.delimiter}"`, "info");
-    log(`Campi totali: ${parsed.fields.length}`, "info");
-    log(`Inizi ordine trovati: ${parsed.starts.length}`, parsed.starts.length ? "success" : "error");
-
-    if (parsed.starts.length === 0) {
-      log("Primi 30 campi letti: " + parsed.fields.slice(0, 30).join(" | "), "warning");
-    }
-
-    updateLoading("Filtraggio ordini...", 65);
-    await tick();
-
-    const result = filterOrders(parsed.records);
-    pendingImport = result;
-
-    log(`Ordini riconosciuti: ${result.total}`, "info");
-    log(`Ordini validi da importare: ${result.validCount}`, result.validCount ? "success" : "warning");
-    log(`Ordini scartati: ${result.skipCount}`, result.skipCount ? "warning" : "info");
-
-    showPreview(result);
-    hideLoading();
-
-    if (result.validCount === 0) {
-      toast("Nessun ordine valido trovato", "error");
-    } else {
-      toast(`Trovati ${result.validCount} ordini validi`);
-    }
-  } catch (error) {
-    hideLoading();
-    log("ERRORE durante la lettura del CSV: " + error.message, "error");
-    toast("Errore durante la lettura del CSV", "error");
-  }
-}
-
-function showPreview(result) {
-  $("preview").classList.add("active");
-
-  $("previewStats").innerHTML = `
-    <div class="stat-mini"><span class="num">${result.total}</span><span class="lbl">Letti</span></div>
-    <div class="stat-mini"><span class="num num-ok">${result.validCount}</span><span class="lbl">Validi</span></div>
-    <div class="stat-mini"><span class="num num-skip">${result.skipCount}</span><span class="lbl">Scartati</span></div>
-  `;
-
-  const reasons = Object.entries(result.reasons).sort((a, b) => b[1] - a[1]);
-
-  if (reasons.length === 0) {
-    $("previewReasons").innerHTML = `<div class="reason"><span>Nessuno scarto</span></div>`;
-  } else {
-    $("previewReasons").innerHTML = reasons
-      .map(([reason, count]) => `<div class="reason"><span>${escapeHtml(reason)}</span><span class="reason-count">${count}</span></div>`)
-      .join("");
-  }
-
-  $("importBtn").disabled = result.validCount === 0;
-}
-
-function cancelPreview() {
-  pendingImport = null;
-  $("preview").classList.remove("active");
-  $("csvFile").value = "";
-  log("Importazione annullata", "warning");
-}
-
-async function doImport() {
-  if (!pendingImport || pendingImport.validCount === 0) return;
-
-  if (!supabase) {
-    toast("Supabase non disponibile", "error");
-    return;
-  }
-
-  try {
-    showLoading("Verifica dati esistenti", "Controllo se ci sono note o date salvate...", 10);
-    log("Verifica dati esistenti su Supabase...", "step");
-
-    const { data, error } = await supabase
-      .from("ordini")
-      .select("numero_ordine, anno_ordine, note_interne, descrizione_breve, data_evasione_grafica");
-
-    if (error) throw error;
-
-    customMap = {};
-
-    (data || []).forEach((row) => {
-      const hasCustom =
-        (row.note_interne && row.note_interne.trim()) ||
-        (row.descrizione_breve && row.descrizione_breve.trim()) ||
-        row.data_evasione_grafica;
-
-      if (hasCustom) {
-        customMap[`${row.numero_ordine}_${row.anno_ordine}`] = {
-          note_interne: row.note_interne || "",
-          descrizione_breve: row.descrizione_breve || "",
-          data_evasione_grafica: row.data_evasione_grafica
-        };
-      }
-    });
-
-    const hasAnyCustom = Object.keys(customMap).length > 0;
-    log(`Ordini con dati personalizzati: ${Object.keys(customMap).length}`, "info");
-
-    hideLoading();
-
-    if (hasAnyCustom) {
-      showModal(
-        `<i class="bi bi-exclamation-triangle"></i> Dati salvati trovati`,
-        `Ci sono <strong>${Object.keys(customMap).length}</strong> ordini con note, descrizioni o date evasione salvate.<br><br>
-        Se scegli <strong>Mantieni</strong>, verranno conservate solo per gli ordini presenti anche nel nuovo CSV.<br>
-        Se scegli <strong>Sovrascrivi</strong>, verrà cancellato tutto.`,
-        [
-          {
-            label: `<i class="bi bi-shield-check"></i> Mantieni i dati salvati`,
-            className: "btn-primary",
-            onClick: () => runImport(true)
-          },
-          {
-            label: `<i class="bi bi-arrow-repeat"></i> Sovrascrivi tutto`,
-            className: "btn-danger",
-            onClick: () => runImport(false)
-          },
-          {
-            label: "Annulla",
-            className: "btn-ghost",
-            onClick: () => {}
+      function createClient() {
+        try {
+          if (!window.supabase) {
+            reject(new Error("Oggetto window.supabase non disponibile"));
+            return;
           }
-        ]
-      );
-    } else {
-      await runImport(false);
-    }
-  } catch (error) {
-    hideLoading();
-    log("ERRORE verifica dati: " + error.message, "error");
-    toast("Errore durante la verifica su Supabase", "error");
-  }
-}
-
-async function runImport(keepCustomData) {
-  try {
-    showLoading("Importazione", "Cancellazione dati precedenti...", 10);
-    log(`Importazione avviata (mantieni dati: ${keepCustomData})`, "step");
-
-    const { error: deleteError } = await supabase
-      .from("ordini")
-      .delete()
-      .gt("id", 0);
-
-    if (deleteError) throw deleteError;
-
-    log("Vecchi ordini cancellati", "success");
-
-    const rows = pendingImport.valid;
-    const batchSize = 100;
-    let inserted = 0;
-
-    for (let i = 0; i < rows.length; i += batchSize) {
-      const batch = rows.slice(i, i + batchSize);
-
-      const { error: insertError } = await supabase
-        .from("ordini")
-        .insert(batch);
-
-      if (insertError) throw insertError;
-
-      inserted += batch.length;
-      const percent = 10 + Math.round((inserted / rows.length) * 70);
-      updateLoading(`Inserimento ${inserted}/${rows.length} ordini...`, percent);
-      log(`Batch inserito: ${batch.length} ordini`, "info");
-      await tick();
-    }
-
-    if (keepCustomData && Object.keys(customMap).length > 0) {
-      updateLoading("Ripristino dati salvati...", 85);
-      log("Ripristino dati personalizzati...", "step");
-
-      const { data: newRows, error: selectError } = await supabase
-        .from("ordini")
-        .select("id, numero_ordine, anno_ordine");
-
-      if (!selectError && newRows) {
-        let restored = 0;
-
-        for (const row of newRows) {
-          const saved = customMap[`${row.numero_ordine}_${row.anno_ordine}`];
-          if (!saved) continue;
-
-          const { error: updateError } = await supabase
-            .from("ordini")
-            .update(saved)
-            .eq("id", row.id);
-
-          if (!updateError) restored++;
+          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          log("Client Supabase creato", "success");
+          resolve(supabaseClient);
+        } catch (err) {
+          reject(err);
         }
+      }
 
-        log(`Dati personalizzati ripristinati: ${restored}`, "success");
+      if (window.supabase) {
+        createClient();
+        return;
+      }
+
+      var script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+      script.onload = createClient;
+      script.onerror = function () {
+        reject(new Error("Impossibile caricare la libreria Supabase dal CDN"));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  // ==========================
+  // LETTURA FILE E DECODIFICA
+  // ==========================
+  function readBuffer(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        resolve(reader.result);
+      };
+      reader.onerror = function () {
+        reject(new Error("Lettura del file non riuscita"));
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function tryDecode(label, buffer) {
+    try {
+      return new TextDecoder(label).decode(buffer);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function countDatePatterns(text) {
+    var matches = text.match(/\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g);
+    return matches ? matches.length : 0;
+  }
+
+  function decodeSmart(buffer) {
+    var bytes = new Uint8Array(buffer);
+
+    if (bytes.length >= 2) {
+      if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
+        var utf16leBom = tryDecode("utf-16le", buffer);
+        if (utf16leBom) return utf16leBom.replace(/^\uFEFF/, "");
+      }
+
+      if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
+        var utf16beBom = tryDecode("utf-16be", buffer);
+        if (utf16beBom) return utf16beBom.replace(/^\uFEFF/, "");
       }
     }
 
-    updateLoading("Aggiornamento timestamp...", 95);
+    var utf8 = tryDecode("utf-8", buffer) || "";
+    var best = utf8;
+    var bestScore = countDatePatterns(utf8);
 
-    try {
-      await supabase.from("meta").upsert({
-        id: 1,
-        ultima_importazione: new Date().toISOString()
-      });
-      log("Timestamp ultima importazione aggiornato", "success");
-    } catch (metaError) {
-      log("Impossibile aggiornare meta: " + metaError.message, "warning");
+    var windows = tryDecode("windows-1252", buffer);
+    if (windows) {
+      var scoreWin = countDatePatterns(windows);
+      if (scoreWin > bestScore) {
+        best = windows;
+        bestScore = scoreWin;
+      }
     }
 
-    hideLoading();
-    cancelPreview();
-    toast(`Importati ${inserted} ordini`);
-    await loadOrders();
+    var latin = tryDecode("iso-8859-1", buffer);
+    if (latin) {
+      var scoreLatin = countDatePatterns(latin);
+      if (scoreLatin > bestScore) {
+        best = latin;
+        bestScore = scoreLatin;
+      }
+    }
 
-  } catch (error) {
-    hideLoading();
-    log("ERRORE importazione: " + error.message, "error");
-    toast("Errore importazione: " + error.message, "error");
+    var utf16le = tryDecode("utf-16le", buffer);
+    if (utf16le) {
+      var scoreUtf16 = countDatePatterns(utf16le);
+      if (scoreUtf16 > bestScore) {
+        best = utf16le;
+      }
+    }
+
+    return best.replace(/^\uFEFF/, "");
   }
-}
 
-async function loadOrders() {
-  try {
-    $("ordersList").innerHTML = `
-      <div class="empty">
-        <i class="bi bi-hourglass-split"></i>
-        Caricamento ordini...
-      </div>
-    `;
+  // ==========================
+  // PARSER CSV
+  // ==========================
+  function detectDelimiter(text) {
+    var counts = { ",": 0, ";": 0, "\t": 0 };
+    var inQuotes = false;
+    var limit = Math.min(text.length, 30000);
 
-    if (!supabase) {
-      $("ordersList").innerHTML = `
-        <div class="empty">
-          <i class="bi bi-wifi-off"></i>
-          Supabase non disponibile.<br>
-          <small>Il caricamento CSV funziona comunque, ma l’import no.</small>
-        </div>
-      `;
-      return;
+    for (var i = 0; i < limit; i++) {
+      var c = text[i];
+
+      if (c === '"') {
+        inQuotes = !inQuotes;
+      } else if (!inQuotes && (c === "," || c === ";" || c === "\t")) {
+        counts[c]++;
+      }
     }
 
-    log("Caricamento ordini da Supabase...", "step");
+    var best = ",";
+    var max = -1;
 
-    const { data, error } = await supabase
-      .from("ordini")
-      .select("*");
+    for (var key in counts) {
+      if (counts[key] > max) {
+        max = counts[key];
+        best = key;
+      }
+    }
 
-    if (error) throw error;
-
-    allOrders = data || [];
-    log(`Ordini caricati: ${allOrders.length}`, "success");
-
-    renderOrders();
-    await loadMeta();
-  } catch (error) {
-    log("ERRORE caricamento ordini: " + error.message, "error");
-
-    $("ordersList").innerHTML = `
-      <div class="empty">
-        <i class="bi bi-database-x"></i>
-        Errore database: ${escapeHtml(error.message)}<br><br>
-        <small>Se la tabella non esiste, esegui lo SQL che ti ho dato.</small>
-      </div>
-    `;
+    return best;
   }
-}
 
-async function loadMeta() {
-  try {
-    if (!supabase) return;
+  function parseCsv(text, delimiter) {
+    var fields = [];
+    var field = "";
+    var inQuotes = false;
 
-    const { data, error } = await supabase
-      .from("meta")
-      .select("ultima_importazione")
-      .eq("id", 1)
-      .maybeSingle();
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
 
-    const lastUpdate = $("lastUpdate");
-
-    if (error) throw error;
-
-    if (!data || !data.ultima_importazione) {
-      lastUpdate.innerHTML = `<i class="bi bi-clock"></i> Nessun aggiornamento`;
-      document.body.classList.remove("stale");
-      return;
+      if (c === '"') {
+        if (inQuotes && text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (!inQuotes && c === delimiter) {
+        fields.push(field.trim());
+        field = "";
+      } else if (!inQuotes && (c === "\n" || c === "\r")) {
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        fields.push(field.trim());
+        field = "";
+      } else if (inQuotes && (c === "\n" || c === "\r")) {
+        field += " ";
+      } else {
+        field += c;
+      }
     }
 
-    const last = new Date(data.ultima_importazione);
-    const hours = (Date.now() - last.getTime()) / (1000 * 60 * 60);
-
-    lastUpdate.innerHTML = `<i class="bi bi-clock"></i> Aggiornato: ${last.toLocaleString("it-IT")}`;
-
-    if (hours > 24) {
-      document.body.classList.add("stale");
-      log(`Dati vecchi: ${hours.toFixed(1)} ore dall'ultima importazione`, "warning");
-    } else {
-      document.body.classList.remove("stale");
-    }
-  } catch (error) {
-    log("Errore caricamento meta: " + error.message, "warning");
+    fields.push(field.trim());
+    return fields;
   }
-}
 
-function getGraficoInfo(raw) {
-  const g = normalizeGrafico(raw);
+  function isItalianDate(value) {
+    var s = String(value || "").trim();
+    var m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (!m) return false;
 
-  if (!g) return { label: "Da smistare", className: "badge-smistare", icon: "bi-person-plus" };
-  if (g === "COMPLETATO") return { label: "Salvo G.", className: "badge-salvo", icon: "bi-person-check" };
-  if (g.includes("ALBERTO")) return { label: "Alberto", className: "badge-alberto", icon: "bi-person" };
-  if (g.includes("PIETRO")) return { label: "Pietro", className: "badge-pietro", icon: "bi-person" };
-  if (g.includes("SAMUELE")) return { label: "Samuele", className: "badge-samuele", icon: "bi-person" };
+    var day = parseInt(m[1], 10);
+    var month = parseInt(m[2], 10);
+    var year = parseInt(m[3], 10);
 
-  return { label: g, className: "badge-other", icon: "bi-person" };
-}
+    if (year < 100) year += 2000;
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31) return false;
 
-function toDatetimeLocalValue(value) {
-  if (!value) return "";
+    var d = new Date(year, month - 1, day);
+    return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day;
+  }
 
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return "";
+  function parseItalianDate(value) {
+    var s = String(value || "").trim();
+    var m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (!m) return null;
 
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+    var day = parseInt(m[1], 10);
+    var month = parseInt(m[2], 10);
+    var year = parseInt(m[3], 10);
 
-function renderOrders() {
-  const search = $("searchInput").value.toLowerCase().trim();
+    if (year < 100) year += 2000;
 
-  let visible = [...allOrders];
+    var d = new Date(year, month - 1, day);
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
 
-  if (search) {
-    visible = visible.filter((o) =>
-      String(o.cliente || "").toLowerCase().includes(search) ||
-      String(o.numero_ordine || "").toLowerCase().includes(search) ||
-      String(o.descrizione_breve || "").toLowerCase().includes(search) ||
-      String(o.note_interne || "").toLowerCase().includes(search) ||
-      String(o.settore || "").toLowerCase().includes(search)
+    return d;
+  }
+
+  function looksLikeStato(value) {
+    var s = String(value || "").toLowerCase();
+    return (
+      s.indexOf("annullato") >= 0 ||
+      s.indexOf("confermato") >= 0 ||
+      s.indexOf("confermare") >= 0 ||
+      s.indexOf("concluso") >= 0 ||
+      s.indexOf("sospeso") >= 0 ||
+      s.indexOf("parz") >= 0
     );
   }
 
-  visible.sort((a, b) => {
-    const aE = a.data_evasione_grafica ? new Date(a.data_evasione_grafica).getTime() : null;
-    const bE = b.data_evasione_grafica ? new Date(b.data_evasione_grafica).getTime() : null;
+  function findStarts(fields) {
+    var starts = [];
 
-    if (aE === null && bE !== null) return -1;
-    if (aE !== null && bE === null) return 1;
-    if (aE !== null && bE !== null && aE !== bE) return aE - bE;
+    for (var i = 0; i + 3 < fields.length; i++) {
+      if (!isItalianDate(fields[i])) continue;
 
-    return new Date(b.data_ordine || 0) - new Date(a.data_ordine || 0);
-  });
+      var numero = String(fields[i + 2] || "").trim();
+      var stato = String(fields[i + 3] || "").trim();
 
-  const stats = {
-    totale: visible.length,
-    smistare: 0,
-    alberto: 0,
-    pietro: 0,
-    samuele: 0,
-    salvo: 0
-  };
+      if (numero && looksLikeStato(stato)) {
+        starts.push(i);
+      }
+    }
 
-  visible.forEach((o) => {
-    const g = normalizeGrafico(o.grafico);
-
-    if (!g) stats.smistare++;
-    else if (g.includes("ALBERTO")) stats.alberto++;
-    else if (g.includes("PIETRO")) stats.pietro++;
-    else if (g.includes("SAMUELE")) stats.samuele++;
-    else if (g === "COMPLETATO") stats.salvo++;
-  });
-
-  $("statsRow").innerHTML = `
-    <div class="stat-card"><span class="n">${stats.totale}</span><span class="l">Totale</span></div>
-    <div class="stat-card"><span class="n" style="color:var(--warning)">${stats.smistare}</span><span class="l">Da smistare</span></div>
-    <div class="stat-card"><span class="n" style="color:#7c3aed">${stats.alberto}</span><span class="l">Alberto</span></div>
-    <div class="stat-card"><span class="n" style="color:#0891b2">${stats.pietro}</span><span class="l">Pietro</span></div>
-    <div class="stat-card"><span class="n" style="color:#059669">${stats.samuele}</span><span class="l">Samuele</span></div>
-    <div class="stat-card"><span class="n" style="color:#475569">${stats.salvo}</span><span class="l">Salvo G.</span></div>
-  `;
-
-  if (visible.length === 0) {
-    $("ordersList").innerHTML = `
-      <div class="empty">
-        <i class="bi bi-inbox"></i>
-        ${search ? "Nessun risultato" : "Nessun ordine"}<br>
-        ${search ? "" : "<small>Carica il CSV per iniziare</small>"}
-      </div>
-    `;
-    return;
+    return starts;
   }
 
-  $("ordersList").innerHTML = visible.map((o) => {
-    const grafico = getGraficoInfo(o.grafico);
-    const hasEvasione = !!o.data_evasione_grafica;
-    const isOverdue = hasEvasione && new Date(o.data_evasione_grafica) < new Date();
+  function extractRecords(fields, starts) {
+    var records = [];
 
-    const cardClass = !hasEvasione ? "no-evade" : (isOverdue ? "overdue" : "");
-    const evasioneValue = toDatetimeLocalValue(o.data_evasione_grafica);
-    const dataOrdine = o.data_ordine ? new Date(o.data_ordine).toLocaleDateString("it-IT") : "";
+    for (var i = 0; i < starts.length; i++) {
+      var start = starts[i];
+      var end = i + 1 < starts.length ? starts[i + 1] : fields.length;
+      var row = fields.slice(start, end);
 
-    return `
-      <div class="card ${cardClass}">
-        <div class="card-top">
-          <div>
-            <div class="order-num">
-              <i class="bi bi-hash"></i>
-              ${escapeHtml(o.numero_ordine)}
-              ${o.settore ? `<span class="tag">${escapeHtml(o.settore)}</span>` : ""}
-            </div>
-            <div class="order-date"><i class="bi bi-calendar3"></i> ${escapeHtml(dataOrdine)}</div>
-            <div class="cliente">${escapeHtml(o.cliente || "Cliente n/d")}</div>
-            ${
-              o.descrizione_breve
-                ? `<div class="desc">${escapeHtml(o.descrizione_breve)}</div>`
-                : `<div class="desc placeholder">Nessuna descrizione breve</div>`
-            }
-          </div>
+      if (row.length < 7) continue;
 
-          <span class="badge ${grafico.className}">
-            <i class="bi ${grafico.icon}"></i>
-            ${escapeHtml(grafico.label)}
-          </span>
-        </div>
+      records.push({
+        data: row[0] || "",
+        operatore: row[1] || "",
+        numero: row[2] || "",
+        stato: row[3] || "",
+        grafico: row[4] || "",
+        dataEvasioneCsv: row[5] || "",
+        cliente: row[6] || "",
+        noteCsv: row[7] || "",
+        prezzo: row[8] || "",
+        settore: row[9] || ""
+      });
+    }
 
-        <div class="fields">
-          <div class="field">
-            <label><i class="bi bi-clock-history"></i> Evasione</label>
-            <input type="datetime-local" id="evade_${o.id}" value="${evasioneValue}">
-          </div>
+    return records;
+  }
 
-          <div class="field">
-            <label><i class="bi bi-card-text"></i> Descrizione</label>
-            <textarea id="desc_${o.id}">${escapeHtml(o.descrizione_breve || "")}</textarea>
-          </div>
+  function parseAny(text) {
+    var detected = detectDelimiter(text);
+    var delimiters = [detected];
 
-          <div class="field">
-            <label><i class="bi bi-sticky"></i> Note interne</label>
-            <textarea id="note_${o.id}">${escapeHtml(o.note_interne || "")}</textarea>
-          </div>
+    if (detected !== ",") delimiters.push(",");
+    if (detected !== ";") delimiters.push(";");
+    if (detected !== "\t") delimiters.push("\t");
 
-          <button class="save-btn" data-save-id="${o.id}">
-            <i class="bi bi-check-lg"></i> Salva modifiche
-          </button>
-        </div>
-      </div>
-    `;
-  }).join("");
-}
+    var best = null;
 
-async function saveOrder(id) {
-  const btn = document.querySelector(`[data-save-id="${id}"]`);
-  if (btn) btn.disabled = true;
+    for (var i = 0; i < delimiters.length; i++) {
+      var d = delimiters[i];
+      var fields = parseCsv(text, d);
+      var starts = findStarts(fields);
 
-  try {
-    if (!supabase) throw new Error("Supabase non disponibile");
+      log('Delimitatore "' + (d === "\t" ? "TAB" : d) + '": campi ' + fields.length + ", inizi ordine " + starts.length, "info");
 
-    const evasione = $(`evade_${id}`).value;
-    const descrizione = $(`desc_${id}`).value;
-    const note = $(`note_${id}`).value;
+      if (!best || starts.length > best.starts.length) {
+        best = {
+          delimiter: d,
+          fields: fields,
+          starts: starts
+        };
+      }
 
-    const payload = {
-      descrizione_breve: descrizione,
-      note_interne: note,
-      data_evasione_grafica: evasione ? new Date(evasione).toISOString() : null
+      if (starts.length > 0 && d === detected) {
+        break;
+      }
+    }
+
+    if (!best) {
+      return { fields: [], starts: [], records: [], delimiter: detected };
+    }
+
+    best.records = extractRecords(best.fields, best.starts);
+    return best;
+  }
+
+  // ==========================
+  // FILTRI
+  // ==========================
+  function normalizeGrafico(value) {
+    return String(value || "")
+      .toUpperCase()
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function filterOrders(records) {
+    var reasons = {};
+    var validRaw = [];
+
+    function skip(reason) {
+      reasons[reason] = (reasons[reason] || 0) + 1;
+    }
+
+    records.forEach(function (rec) {
+      var date = parseItalianDate(rec.data);
+      if (!date) {
+        skip("Data non valida");
+        return;
+      }
+
+      var stato = String(rec.stato || "").toLowerCase();
+      var grafico = normalizeGrafico(rec.grafico);
+      var numero = String(rec.numero || "").toUpperCase().trim();
+      var year = date.getFullYear();
+
+      if (stato.indexOf("annullato") >= 0) {
+        skip("Annullato");
+        return;
+      }
+
+      if (!(stato.indexOf("confermato") >= 0 || stato.indexOf("confermare") >= 0)) {
+        skip("Stato escluso: " + (rec.stato || "n/d"));
+        return;
+      }
+
+      if (grafico === "SOSPESO" || stato.indexOf("sospeso") >= 0) {
+        skip("Sospeso");
+        return;
+      }
+
+      if (numero.indexOf("/B") >= 0) {
+        skip("Numero /B");
+        return;
+      }
+
+      if (!VALID_GRAFICI[grafico]) {
+        skip("Grafico escluso: " + (rec.grafico || "n/d"));
+        return;
+      }
+
+      if (year < currentYear - 1 || year > currentYear + 1) {
+        skip("Anno escluso: " + year);
+        return;
+      }
+
+      validRaw.push({
+        numero_ordine: rec.numero.trim(),
+        anno_ordine: year,
+        cliente: rec.cliente.trim() || "Cliente",
+        data_ordine: year + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0"),
+        grafico: rec.grafico.trim(),
+        stato: rec.stato.trim(),
+        settore: rec.settore.trim()
+      });
+    });
+
+    var unique = new Map();
+    var duplicates = 0;
+
+    validRaw.forEach(function (order) {
+      var key = order.numero_ordine + "_" + order.anno_ordine;
+      if (unique.has(key)) duplicates++;
+      unique.set(key, order);
+    });
+
+    if (duplicates > 0) reasons["Duplicati"] = duplicates;
+
+    var valid = Array.from(unique.values());
+
+    return {
+      total: records.length,
+      valid: valid,
+      validCount: valid.length,
+      skipCount: records.length - valid.length,
+      reasons: reasons
     };
-
-    const { error } = await supabase
-      .from("ordini")
-      .update(payload)
-      .eq("id", id);
-
-    if (error) throw error;
-
-    const local = allOrders.find((o) => String(o.id) === String(id));
-    if (local) Object.assign(local, payload);
-
-    toast("Ordine salvato");
-    log(`Ordine ${id} salvato`, "success");
-    renderOrders();
-  } catch (error) {
-    toast("Errore salvataggio: " + error.message, "error");
-    log("ERRORE salvataggio ordine: " + error.message, "error");
-  } finally {
-    if (btn) btn.disabled = false;
   }
-}
 
-function confirmClearFirst() {
-  showModal(
-    `<i class="bi bi-exclamation-triangle"></i> Svuotare il database?`,
-    "Questa è la <strong>prima conferma</strong>.<br>Tutti gli ordini verranno cancellati.",
-    [
-      {
-        label: "Continua",
-        className: "btn-danger",
-        onClick: confirmClearSecond
-      },
-      {
-        label: "Annulla",
-        className: "btn-ghost",
-        onClick: () => {}
-      }
-    ]
-  );
-}
+  // ==========================
+  // GESTIONE FILE
+  // ==========================
+  async function handleFileSelected(file) {
+    if (!file) {
+      setStatus("Nessun file selezionato");
+      return;
+    }
 
-function confirmClearSecond() {
-  showModal(
-    `<i class="bi bi-trash"></i> Seconda conferma`,
-    "Sei davvero sicuro? L’operazione è irreversibile.",
-    [
-      {
-        label: `<i class="bi bi-trash"></i> Sì, svuota tutto`,
-        className: "btn-danger",
-        onClick: doClear
-      },
-      {
-        label: "Annulla",
-        className: "btn-ghost",
-        onClick: () => {}
-      }
-    ]
-  );
-}
-
-async function doClear() {
-  try {
-    if (!supabase) throw new Error("Supabase non disponibile");
-
-    log("Svuotamento database...", "step");
-
-    const { error } = await supabase
-      .from("ordini")
-      .delete()
-      .gt("id", 0);
-
-    if (error) throw error;
+    log("File selezionato: " + file.name + " (" + file.size + " byte)", "step");
+    setStatus("Lettura file: " + file.name);
+    showLoading("Lettura file", "Carico il CSV...", 10);
 
     try {
-      await supabase.from("meta").upsert({
-        id: 1,
-        ultima_importazione: new Date().toISOString()
+      var buffer = await readBuffer(file);
+      log("File letto in memoria", "success");
+
+      updateLoading("Decodifica testo...", 25);
+      await wait(20);
+
+      var text = decodeSmart(buffer);
+      log("Testo decodificato: " + text.length + " caratteri", "info");
+
+      updateLoading("Analisi CSV...", 45);
+      await wait(20);
+
+      var parsed = parseAny(text);
+      log("Ordini riconosciuti: " + parsed.starts.length, parsed.starts.length ? "success" : "error");
+
+      if (parsed.starts.length === 0) {
+        log("Primi 50 campi letti: " + parsed.fields.slice(0, 50).join(" | "), "warning");
+      }
+
+      updateLoading("Filtraggio ordini...", 70);
+      await wait(20);
+
+      var result = filterOrders(parsed.records);
+      pendingImport = result;
+
+      showPreview(result);
+      hideLoading();
+
+      setStatus("CSV analizzato: " + result.validCount + " ordini validi");
+
+      if (result.validCount === 0) {
+        toast("Nessun ordine valido trovato", "error");
+      } else {
+        toast("Trovati " + result.validCount + " ordini validi");
+      }
+    } catch (err) {
+      hideLoading();
+      log("ERRORE durante la gestione del file: " + err.message, "error");
+      setStatus("Errore: " + err.message);
+      toast("Errore durante la gestione del file", "error");
+    }
+  }
+
+  window.handleFileSelected = handleFileSelected;
+
+  function showPreview(result) {
+    $("preview").classList.add("active");
+
+    $("previewStats").innerHTML =
+      '<div class="stat-mini"><span class="num">' + result.total + '</span><span class="lbl">Letti</span></div>' +
+      '<div class="stat-mini"><span class="num num-ok">' + result.validCount + '</span><span class="lbl">Validi</span></div>' +
+      '<div class="stat-mini"><span class="num num-skip">' + result.skipCount + '</span><span class="lbl">Scartati</span></div>';
+
+    var reasons = Object.entries(result.reasons).sort(function (a, b) {
+      return b[1] - a[1];
+    });
+
+    if (reasons.length === 0) {
+      $("previewReasons").innerHTML = '<div class="reason"><span>Nessuno scarto</span></div>';
+    } else {
+      $("previewReasons").innerHTML = reasons.map(function (item) {
+        return '<div class="reason"><span>' + escapeHtml(item[0]) + '</span><span class="reason-count">' + item[1] + "</span></div>";
+      }).join("");
+    }
+
+    $("importBtn").disabled = result.validCount === 0;
+  }
+
+  function cancelPreview() {
+    pendingImport = null;
+    $("preview").classList.remove("active");
+    $("csvFile").value = "";
+    setStatus("Importazione annullata");
+    log("Importazione annullata", "warning");
+  }
+
+  // ==========================
+  // IMPORT
+  // ==========================
+  async function doImport() {
+    if (!pendingImport || pendingImport.validCount === 0) return;
+
+    try {
+      showLoading("Verifica dati esistenti", "Controllo se ci sono note o date salvate...", 10);
+      log("Verifica dati esistenti su Supabase...", "step");
+
+      var client = await ensureSupabase();
+
+      var existingRes = await client
+        .from("ordini")
+        .select("numero_ordine, anno_ordine, note_interne, descrizione_breve, data_evasione_grafica");
+
+      if (existingRes.error) throw existingRes.error;
+
+      customMap = {};
+
+      (existingRes.data || []).forEach(function (row) {
+        var hasCustom =
+          (row.note_interne && row.note_interne.trim()) ||
+          (row.descrizione_breve && row.descrizione_breve.trim()) ||
+          row.data_evasione_grafica;
+
+        if (hasCustom) {
+          customMap[row.numero_ordine + "_" + row.anno_ordine] = {
+            note_interne: row.note_interne || "",
+            descrizione_breve: row.descrizione_breve || "",
+            data_evasione_grafica: row.data_evasione_grafica
+          };
+        }
       });
-    } catch (e) {
-      log("Errore aggiornamento meta dopo svuotamento: " + e.message, "warning");
+
+      var hasAnyCustom = Object.keys(customMap).length > 0;
+      log("Ordini con dati personalizzati: " + Object.keys(customMap).length, "info");
+
+      hideLoading();
+
+      if (hasAnyCustom) {
+        showModal(
+          '<i class="bi bi-exclamation-triangle"></i> Dati salvati trovati',
+          "Ci sono <strong>" + Object.keys(customMap).length + "</strong> ordini con note, descrizioni o date evasione salvate.<br><br>" +
+          "Se scegli <strong>Mantieni</strong>, verranno conservate solo per gli ordini presenti anche nel nuovo CSV.<br>" +
+          "Se scegli <strong>Sovrascrivi</strong>, verrà cancellato tutto.",
+          [
+            {
+              label: '<i class="bi bi-shield-check"></i> Mantieni i dati salvati',
+              className: "btn-primary",
+              onClick: function () {
+                runImport(true);
+              }
+            },
+            {
+              label: '<i class="bi bi-arrow-repeat"></i> Sovrascrivi tutto',
+              className: "btn-danger",
+              onClick: function () {
+                runImport(false);
+              }
+            },
+            {
+              label: "Annulla",
+              className: "btn-ghost",
+              onClick: function () {}
+            }
+          ]
+        );
+      } else {
+        await runImport(false);
+      }
+    } catch (err) {
+      hideLoading();
+      log("ERRORE verifica dati: " + err.message, "error");
+      toast("Errore durante la verifica su Supabase", "error");
+    }
+  }
+
+  async function runImport(keepCustomData) {
+    try {
+      showLoading("Importazione", "Cancellazione dati precedenti...", 10);
+      log("Importazione avviata (mantieni dati: " + keepCustomData + ")", "step");
+
+      var client = await ensureSupabase();
+
+      var deleteRes = await client.from("ordini").delete().gt("id", 0);
+      if (deleteRes.error) throw deleteRes.error;
+
+      log("Vecchi ordini cancellati", "success");
+
+      var rows = pendingImport.valid;
+      var batchSize = 100;
+      var inserted = 0;
+
+      for (var i = 0; i < rows.length; i += batchSize) {
+        var batch = rows.slice(i, i + batchSize);
+
+        var insertRes = await client.from("ordini").insert(batch);
+        if (insertRes.error) throw insertRes.error;
+
+        inserted += batch.length;
+        var percent = 10 + Math.round((inserted / rows.length) * 70);
+        updateLoading("Inserimento " + inserted + "/" + rows.length + " ordini...", percent);
+        log("Batch inserito: " + batch.length + " ordini", "info");
+        await wait(10);
+      }
+
+      if (keepCustomData && Object.keys(customMap).length > 0) {
+        updateLoading("Ripristino dati salvati...", 85);
+        log("Ripristino dati personalizzati...", "step");
+
+        var newRowsRes = await client.from("ordini").select("id, numero_ordine, anno_ordine");
+        if (!newRowsRes.error && newRowsRes.data) {
+          var restored = 0;
+
+          for (var j = 0; j < newRowsRes.data.length; j++) {
+            var row = newRowsRes.data[j];
+            var saved = customMap[row.numero_ordine + "_" + row.anno_ordine];
+            if (!saved) continue;
+
+            var updateRes = await client.from("ordini").update(saved).eq("id", row.id);
+            if (!updateRes.error) restored++;
+          }
+
+          log("Dati personalizzati ripristinati: " + restored, "success");
+        }
+      }
+
+      updateLoading("Aggiornamento timestamp...", 95);
+
+      try {
+        await client.from("meta").upsert({ id: 1, ultima_importazione: new Date().toISOString() }, { onConflict: "id" });
+        log("Timestamp ultima importazione aggiornato", "success");
+      } catch (metaErr) {
+        log("Impossibile aggiornare meta: " + metaErr.message, "warning");
+      }
+
+      hideLoading();
+      cancelPreview();
+      toast("Importati " + inserted + " ordini");
+      await loadOrders();
+    } catch (err) {
+      hideLoading();
+      log("ERRORE importazione: " + err.message, "error");
+      toast("Errore importazione: " + err.message, "error");
+    }
+  }
+
+  // ==========================
+  // LOAD / RENDER
+  // ==========================
+  async function loadOrders() {
+    try {
+      $("ordersList").innerHTML = '<div class="empty"><i class="bi bi-hourglass-split"></i>Caricamento ordini...</div>';
+      setStatus("Caricamento ordini da Supabase...");
+      log("Caricamento ordini da Supabase...", "step");
+
+      var client = await ensureSupabase();
+      var res = await client.from("ordini").select("*");
+
+      if (res.error) throw res.error;
+
+      allOrders = res.data || [];
+      log("Ordini caricati: " + allOrders.length, "success");
+      setStatus("Ordini caricati: " + allOrders.length);
+
+      renderOrders();
+      await loadMeta();
+    } catch (err) {
+      log("ERRORE caricamento ordini: " + err.message, "error");
+      setStatus("Errore Supabase: " + err.message);
+
+      $("ordersList").innerHTML =
+        '<div class="empty"><i class="bi bi-database-x"></i>Errore database: ' +
+        escapeHtml(err.message) +
+        "<br><br><small>Se la tabella non esiste, esegui lo SQL di creazione.</small></div>";
+    }
+  }
+
+  async function loadMeta() {
+    try {
+      var client = await ensureSupabase();
+
+      var res = await client
+        .from("meta")
+        .select("ultima_importazione")
+        .eq("id", 1)
+        .maybeSingle();
+
+      var lastUpdate = $("lastUpdate");
+
+      if (res.error) throw res.error;
+
+      if (!res.data || !res.data.ultima_importazione) {
+        lastUpdate.innerHTML = '<i class="bi bi-clock"></i> Nessun aggiornamento';
+        document.body.classList.remove("stale");
+        return;
+      }
+
+      var last = new Date(res.data.ultima_importazione);
+      var hours = (Date.now() - last.getTime()) / (1000 * 60 * 60);
+
+      lastUpdate.innerHTML = '<i class="bi bi-clock"></i> Aggiornato: ' + last.toLocaleString("it-IT");
+
+      if (hours > 24) {
+        document.body.classList.add("stale");
+        log("Dati vecchi: " + hours.toFixed(1) + " ore dall'ultima importazione", "warning");
+      } else {
+        document.body.classList.remove("stale");
+      }
+    } catch (err) {
+      log("Errore caricamento meta: " + err.message, "warning");
+    }
+  }
+
+  function getGraficoInfo(raw) {
+    var g = normalizeGrafico(raw);
+
+    if (!g) return { label: "Da smistare", className: "badge-smistare", icon: "bi-person-plus" };
+    if (g === "COMPLETATO") return { label: "Salvo G.", className: "badge-salvo", icon: "bi-person-check" };
+    if (g.indexOf("ALBERTO") >= 0) return { label: "Alberto", className: "badge-alberto", icon: "bi-person" };
+    if (g.indexOf("PIETRO") >= 0) return { label: "Pietro", className: "badge-pietro", icon: "bi-person" };
+    if (g.indexOf("SAMUELE") >= 0) return { label: "Samuele", className: "badge-samuele", icon: "bi-person" };
+
+    return { label: g, className: "badge-other", icon: "bi-person" };
+  }
+
+  function toDatetimeLocalValue(value) {
+    if (!value) return "";
+
+    var d = new Date(value);
+    if (isNaN(d.getTime())) return "";
+
+    function pad(n) {
+      return String(n).padStart(2, "0");
     }
 
-    allOrders = [];
-    renderOrders();
-    await loadMeta();
-
-    toast("Database svuotato");
-    log("Database svuotato", "success");
-  } catch (error) {
-    toast("Errore: " + error.message, "error");
-    log("ERRORE svuotamento: " + error.message, "error");
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
   }
-}
 
-function showModal(title, bodyHtml, buttons) {
-  $("modalTitle").innerHTML = title;
-  $("modalBody").innerHTML = bodyHtml;
+  function renderOrders() {
+    var search = $("searchInput") ? $("searchInput").value.toLowerCase().trim() : "";
 
-  const wrap = $("modalButtons");
-  wrap.innerHTML = "";
+    var visible = allOrders.slice();
 
-  buttons.forEach((b) => {
-    const btn = document.createElement("button");
-    btn.className = b.className || "btn-ghost";
-    btn.innerHTML = b.label;
-    btn.addEventListener("click", () => {
-      closeModal();
-      if (b.onClick) b.onClick();
+    if (search) {
+      visible = visible.filter(function (o) {
+        return (
+          String(o.cliente || "").toLowerCase().indexOf(search) >= 0 ||
+          String(o.numero_ordine || "").toLowerCase().indexOf(search) >= 0 ||
+          String(o.descrizione_breve || "").toLowerCase().indexOf(search) >= 0 ||
+          String(o.note_interne || "").toLowerCase().indexOf(search) >= 0 ||
+          String(o.settore || "").toLowerCase().indexOf(search) >= 0
+        );
+      });
+    }
+
+    visible.sort(function (a, b) {
+      var aE = a.data_evasione_grafica ? new Date(a.data_evasione_grafica).getTime() : null;
+      var bE = b.data_evasione_grafica ? new Date(b.data_evasione_grafica).getTime() : null;
+
+      if (aE === null && bE !== null) return -1;
+      if (aE !== null && bE === null) return 1;
+      if (aE !== null && bE !== null && aE !== bE) return aE - bE;
+
+      return new Date(b.data_ordine || 0) - new Date(a.data_ordine || 0);
     });
-    wrap.appendChild(btn);
-  });
 
-  $("modalBg").classList.add("active");
-}
+    var stats = {
+      totale: visible.length,
+      smistare: 0,
+      alberto: 0,
+      pietro: 0,
+      samuele: 0,
+      salvo: 0
+    };
 
-function closeModal() {
-  $("modalBg").classList.remove("active");
-}
+    visible.forEach(function (o) {
+      var g = normalizeGrafico(o.grafico);
 
-function bindEvents() {
-  $("logToggle").addEventListener("click", () => {
-    $("debugPanel").classList.toggle("active");
-  });
+      if (!g) stats.smistare++;
+      else if (g.indexOf("ALBERTO") >= 0) stats.alberto++;
+      else if (g.indexOf("PIETRO") >= 0) stats.pietro++;
+      else if (g.indexOf("SAMUELE") >= 0) stats.samuele++;
+      else if (g === "COMPLETATO") stats.salvo++;
+    });
 
-  $("refreshBtn").addEventListener("click", () => {
-    log("Refresh manuale", "step");
+    $("statsRow").innerHTML =
+      '<div class="stat-card"><span class="n">' + stats.totale + '</span><span class="l">Totale</span></div>' +
+      '<div class="stat-card"><span class="n" style="color:var(--warning)">' + stats.smistare + '</span><span class="l">Da smistare</span></div>' +
+      '<div class="stat-card"><span class="n" style="color:#7c3aed">' + stats.alberto + '</span><span class="l">Alberto</span></div>' +
+      '<div class="stat-card"><span class="n" style="color:#0891b2">' + stats.pietro + '</span><span class="l">Pietro</span></div>' +
+      '<div class="stat-card"><span class="n" style="color:#059669">' + stats.samuele + '</span><span class="l">Samuele</span></div>' +
+      '<div class="stat-card"><span class="n" style="color:#475569">' + stats.salvo + '</span><span class="l">Salvo G.</span></div>';
+
+    if (visible.length === 0) {
+      $("ordersList").innerHTML =
+        '<div class="empty"><i class="bi bi-inbox"></i>' +
+        (search ? "Nessun risultato" : "Nessun ordine") +
+        "<br>" +
+        (search ? "" : "<small>Carica il CSV per iniziare</small>") +
+        "</div>";
+      return;
+    }
+
+    $("ordersList").innerHTML = visible.map(function (o) {
+      var grafico = getGraficoInfo(o.grafico);
+      var hasEvasione = !!o.data_evasione_grafica;
+      var isOverdue = hasEvasione && new Date(o.data_evasione_grafica) < new Date();
+
+      var cardClass = !hasEvasione ? "no-evade" : (isOverdue ? "overdue" : "");
+      var evasioneValue = toDatetimeLocalValue(o.data_evasione_grafica);
+      var dataOrdine = o.data_ordine ? new Date(o.data_ordine).toLocaleDateString("it-IT") : "";
+
+      return (
+        '<div class="card ' + cardClass + '">' +
+          '<div class="card-top">' +
+            "<div>" +
+              '<div class="order-num">' +
+                '<i class="bi bi-hash"></i>' +
+                escapeHtml(o.numero_ordine) +
+                (o.settore ? '<span class="tag">' + escapeHtml(o.settore) + "</span>" : "") +
+              "</div>" +
+              '<div class="order-date"><i class="bi bi-calendar3"></i> ' + escapeHtml(dataOrdine) + "</div>" +
+              '<div class="cliente">' + escapeHtml(o.cliente || "Cliente n/d") + "</div>" +
+              (
+                o.descrizione_breve
+                  ? '<div class="desc">' + escapeHtml(o.descrizione_breve) + "</div>"
+                  : '<div class="desc placeholder">Nessuna descrizione breve</div>'
+              ) +
+            "</div>" +
+            '<span class="badge ' + grafico.className + '"><i class="bi ' + grafico.icon + '"></i>' + escapeHtml(grafico.label) + "</span>" +
+          "</div>" +
+          '<div class="fields">' +
+            '<div class="field">' +
+              '<label><i class="bi bi-clock-history"></i> Evasione</label>' +
+              '<input type="datetime-local" id="evade_' + o.id + '" value="' + evasioneValue + '">' +
+            "</div>" +
+            '<div class="field">' +
+              '<label><i class="bi bi-card-text"></i> Descrizione</label>' +
+              '<textarea id="desc_' + o.id + '">' + escapeHtml(o.descrizione_breve || "") + "</textarea>" +
+            "</div>" +
+            '<div class="field">' +
+              '<label><i class="bi bi-sticky"></i> Note interne</label>' +
+              '<textarea id="note_' + o.id + '">' + escapeHtml(o.note_interne || "") + "</textarea>" +
+            "</div>" +
+            '<button class="save-btn" data-save-id="' + o.id + '"><i class="bi bi-check-lg"></i> Salva modifiche</button>' +
+          "</div>" +
+        "</div>"
+      );
+    }).join("");
+  }
+
+  async function saveOrder(id) {
+    var btn = document.querySelector('[data-save-id="' + id + '"]');
+    if (btn) btn.disabled = true;
+
+    try {
+      var client = await ensureSupabase();
+
+      var evasione = $("evade_" + id).value;
+      var descrizione = $("desc_" + id).value;
+      var note = $("note_" + id).value;
+
+      var payload = {
+        descrizione_breve: descrizione,
+        note_interne: note,
+        data_evasione_grafica: evasione ? new Date(evasione).toISOString() : null
+      };
+
+      var res = await client.from("ordini").update(payload).eq("id", id);
+      if (res.error) throw res.error;
+
+      var local = allOrders.find(function (o) {
+        return String(o.id) === String(id);
+      });
+
+      if (local) {
+        local.descrizione_breve = descrizione;
+        local.note_interne = note;
+        local.data_evasione_grafica = payload.data_evasione_grafica;
+      }
+
+      toast("Ordine salvato");
+      log("Ordine " + id + " salvato", "success");
+      renderOrders();
+    } catch (err) {
+      toast("Errore salvataggio: " + err.message, "error");
+      log("ERRORE salvataggio ordine: " + err.message, "error");
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  async function doClear() {
+    if (!confirm("Prima conferma: vuoi davvero svuotare il database?")) return;
+    if (!confirm("Seconda conferma: tutti gli ordini verranno cancellati. Procedo?")) return;
+
+    try {
+      var client = await ensureSupabase();
+
+      var res = await client.from("ordini").delete().gt("id", 0);
+      if (res.error) throw res.error;
+
+      try {
+        await client.from("meta").upsert({ id: 1, ultima_importazione: new Date().toISOString() }, { onConflict: "id" });
+      } catch (metaErr) {
+        log("Errore aggiornamento meta dopo svuotamento: " + metaErr.message, "warning");
+      }
+
+      allOrders = [];
+      renderOrders();
+      await loadMeta();
+
+      toast("Database svuotato");
+      log("Database svuotato", "success");
+    } catch (err) {
+      toast("Errore: " + err.message, "error");
+      log("ERRORE svuotamento: " + err.message, "error");
+    }
+  }
+
+  // ==========================
+  // MODAL
+  // ==========================
+  function showModal(title, bodyHtml, buttons) {
+    $("modalTitle").innerHTML = title;
+    $("modalBody").innerHTML = bodyHtml;
+
+    var wrap = $("modalButtons");
+    wrap.innerHTML = "";
+
+    buttons.forEach(function (b) {
+      var btn = document.createElement("button");
+      btn.className = b.className || "btn-ghost";
+      btn.innerHTML = b.label;
+      btn.addEventListener("click", function () {
+        closeModal();
+        if (b.onClick) b.onClick();
+      });
+      wrap.appendChild(btn);
+    });
+
+    $("modalBg").classList.add("active");
+  }
+
+  function closeModal() {
+    $("modalBg").classList.remove("active");
+  }
+
+  // ==========================
+  // UI BINDING
+  // ==========================
+  function bindUi() {
+    $("refreshBtn").addEventListener("click", function () {
+      log("Refresh manuale", "step");
+      loadOrders();
+    });
+
+    $("clearBtn").addEventListener("click", function () {
+      doClear();
+    });
+
+    $("cancelImportBtn").addEventListener("click", function () {
+      cancelPreview();
+    });
+
+    $("importBtn").addEventListener("click", function () {
+      doImport();
+    });
+
+    $("searchInput").addEventListener("input", function () {
+      renderOrders();
+    });
+
+    $("ordersList").addEventListener("click", function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest("[data-save-id]") : null;
+      if (btn) saveOrder(btn.getAttribute("data-save-id"));
+    });
+
+    $("modalBg").addEventListener("click", function (e) {
+      if (e.target === $("modalBg")) closeModal();
+    });
+
+    var dz = $("dropzone");
+
+    dz.addEventListener("click", function () {
+      $("csvFile").click();
+    });
+
+    ["dragenter", "dragover"].forEach(function (eventName) {
+      dz.addEventListener(eventName, function (e) {
+        e.preventDefault();
+        dz.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(function (eventName) {
+      dz.addEventListener(eventName, function (e) {
+        e.preventDefault();
+        dz.classList.remove("dragover");
+      });
+    });
+
+    dz.addEventListener("drop", function (e) {
+      var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file) handleFileSelected(file);
+    });
+  }
+
+  function init() {
+    log("Inizializzazione dashboard...", "step");
+    log("Anno corrente usato dai filtri: " + currentYear, "info");
+
+    (window.__bootErrors || []).forEach(function (err) {
+      log(err, "error");
+    });
+
+    if ((window.__bootErrors || []).length === 0) {
+      log("Pagina caricata. Script principale attivo.", "success");
+    }
+
+    bindUi();
     loadOrders();
-  });
 
-  $("clearBtn").addEventListener("click", confirmClearFirst);
-
-  $("csvFile").addEventListener("change", function () {
-    log("Input file cambiato", "info");
-    if (this.files && this.files[0]) {
-      handleFile(this.files[0]);
-    }
-    this.value = "";
-  });
-
-  const dz = $("dropzone");
-
-  dz.addEventListener("click", () => {
-    log("Click sulla dropzone", "info");
-  });
-
-  ["dragenter", "dragover"].forEach((eventName) => {
-    dz.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      dz.classList.add("dragover");
-    });
-  });
-
-  ["dragleave", "drop"].forEach((eventName) => {
-    dz.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      dz.classList.remove("dragover");
-    });
-  });
-
-  dz.addEventListener("drop", (e) => {
-    const file = e.dataTransfer.files && e.dataTransfer.files[0];
-    if (file) handleFile(file);
-  });
-
-  $("cancelImportBtn").addEventListener("click", cancelPreview);
-  $("importBtn").addEventListener("click", doImport);
-
-  $("searchInput").addEventListener("input", renderOrders);
-
-  $("ordersList").addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-save-id]");
-    if (btn) saveOrder(btn.getAttribute("data-save-id"));
-  });
-
-  $("modalBg").addEventListener("click", (e) => {
-    if (e.target === $("modalBg")) closeModal();
-  });
-}
-
-function init() {
-  log("Avvio applicazione...", "step");
-  log(`Anno corrente usato dai filtri: ${currentYear}`, "info");
-
-  try {
-    if (!window.supabase) {
-      throw new Error("Libreria Supabase non caricata dal CDN");
-    }
-
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    log("Client Supabase creato", "success");
-  } catch (error) {
-    log("ERRORE init Supabase: " + error.message, "error");
+    setInterval(function () {
+      if (supabaseClient) loadMeta();
+    }, 60000);
   }
 
-  bindEvents();
-  loadOrders();
-
-  setInterval(() => {
-    loadMeta();
-  }, 60000);
-}
-
-init();
+  init();
+})();
 </script>
 
 </body>
