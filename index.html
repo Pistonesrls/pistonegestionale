@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f5f3">
+  <meta name="description" content="Pianificazione grafica degli ordini Danea, sincronizzata con Supabase.">
+  <title>Piano grafica · Ordini</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="./src/styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script defer src="./src/csv.js"></script>
+  <script defer src="./src/db.js"></script>
+  <script defer src="./src/main.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#ordersList">Vai all’elenco ordini</a>
+
+  <header class="app-header">
+    <div class="header-primary">
+      <a class="brand" href="#top" id="top" aria-label="Piano grafica, torna all’inizio">
+        <span class="brand-mark" aria-hidden="true">PG</span>
+        <span><strong>Piano grafica</strong><small>Ordini stampa e installazione</small></span>
+      </a>
+      <div class="header-actions">
+        <button class="button button-quiet icon-button" id="refreshBtn" type="button" aria-label="Ricarica dati" title="Ricarica dati">
+          <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+        </button>
+        <button class="button button-quiet icon-button" id="clearBtn" type="button" aria-label="Svuota database" title="Svuota database">
+          <i class="bi bi-trash3" aria-hidden="true"></i>
+        </button>
+        <button class="button button-primary" id="importBtn" type="button">
+          <i class="bi bi-upload" aria-hidden="true"></i><span>Importa CSV</span>
+        </button>
+      </div>
+    </div>
+    <div class="header-secondary">
+      <div class="sync-status" id="syncStatus" role="status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="syncText">Connessione a Supabase…</span>
+      </div>
+      <span class="last-update" id="lastUpdate">Ultima importazione: —</span>
+    </div>
+  </header>
+
+  <main class="main-shell">
+    <section class="stale-banner" id="staleBanner" hidden aria-live="assertive">
+      <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+      <div><strong>Attenzione: dati non aggiornati</strong><span>L’ultima importazione risale a più di 24 ore fa.</span></div>
+      <button class="button button-on-alert" type="button" data-open-import>Aggiorna ora</button>
+    </section>
+
+    <section class="overview" aria-label="Riepilogo ordini">
+      <div class="overview-title">
+        <p class="section-label">Coda di lavoro</p>
+        <h1>Lavori in arrivo</h1>
+      </div>
+      <dl class="stats">
+        <div><dt>Ordini</dt><dd id="statTotal">—</dd></div>
+        <div><dt>Da smistare</dt><dd id="statUnassigned">—</dd></div>
+        <div><dt>Da pianificare</dt><dd id="statUnscheduled">—</dd></div>
+      </dl>
+    </section>
+
+    <section class="workspace" aria-label="Elenco lavori">
+      <div class="toolbar">
+        <label class="search-field" for="searchInput">
+          <i class="bi bi-search" aria-hidden="true"></i>
+          <input id="searchInput" type="search" placeholder="Cerca ordine, cliente o settore" autocomplete="off">
+          <button class="search-clear" id="searchClearBtn" type="button" aria-label="Cancella ricerca" hidden><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        </label>
+        <label class="select-field" for="graphicFilter">
+          <span class="sr-only">Filtra per grafico</span>
+          <i class="bi bi-person" aria-hidden="true"></i>
+          <select id="graphicFilter">
+            <option value="all">Tutti i grafici</option>
+            <option value="unassigned">Da smistare</option>
+            <option value="ALBERTO">Alberto</option>
+            <option value="PIETRO">Pietro</option>
+            <option value="SAMUELE">Samuele</option>
+            <option value="SALVO">Salvo G.</option>
+          </select>
+          <i class="bi bi-chevron-down select-chevron" aria-hidden="true"></i>
+        </label>
+      </div>
+
+      <div class="list-meta">
+        <span id="resultCount">Caricamento ordini…</span>
+        <span class="sort-label"><i class="bi bi-sort-down" aria-hidden="true"></i> Evasione grafica</span>
+      </div>
+
+      <div class="order-columns" aria-hidden="true">
+        <span>Ordine</span><span>Cliente / descrizione</span><span>Grafico</span><span>Evasione grafica</span><span></span>
+      </div>
+      <div class="orders-list" id="ordersList" aria-live="polite"></div>
+
+      <div class="load-more-wrap" id="loadMoreWrap" hidden>
+        <button class="button button-secondary" id="loadMoreBtn" type="button">Mostra altri ordini</button>
+      </div>
+
+      <div class="empty-state" id="emptyState" hidden>
+        <i class="bi bi-inbox" aria-hidden="true"></i>
+        <h2 id="emptyTitle">Nessun ordine presente</h2>
+        <p id="emptyText">Importa l’export CSV di Danea per creare la coda di lavoro.</p>
+        <button class="button button-primary" id="emptyActionBtn" type="button" data-open-import><i class="bi bi-upload" aria-hidden="true"></i>Importa CSV</button>
+      </div>
+
+      <div class="error-state" id="errorState" hidden role="alert">
+        <i class="bi bi-cloud-slash" aria-hidden="true"></i>
+        <h2>Non riesco a leggere i dati</h2>
+        <p id="loadErrorText">Verifica la connessione e riprova.</p>
+        <button class="button button-secondary" id="retryBtn" type="button"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>Riprova</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="dialog import-dialog" id="importDialog" aria-labelledby="importTitle">
+    <div class="dialog-header">
+      <div><p class="section-label">Aggiornamento dati</p><h2 id="importTitle">Importa da Danea</h2></div>
+      <button class="dialog-close" type="button" data-close-dialog aria-label="Chiudi importazione"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+    </div>
+
+    <div class="dialog-body">
+      <section id="importPickStep">
+        <label class="drop-zone" id="dropZone" for="csvInput">
+          <input id="csvInput" type="file" accept=".csv,text/csv" hidden>
+          <i class="bi bi-filetype-csv" aria-hidden="true"></i>
+          <strong>Scegli il CSV esportato da Danea</strong>
+          <span>oppure trascinalo qui · nessun dato viene inviato prima della conferma</span>
+          <span class="button button-secondary">Seleziona file</span>
+        </label>
+        <div class="import-rules">
+          <h3>Filtri applicati automaticamente</h3>
+          <ul>
+            <li><i class="bi bi-check2" aria-hidden="true"></i>Solo stati Da confermare e Confermato</li>
+            <li><i class="bi bi-check2" aria-hidden="true"></i>Esclusi Annullati, Sospesi e numerazioni /B</li>
+            <li><i class="bi bi-check2" aria-hidden="true"></i>Anno precedente, attuale e successivo</li>
+            <li><i class="bi bi-check2" aria-hidden="true"></i>PLOTTER, INSEGNE e FURGONE inclusi di default</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="processing-state" id="importReadStep" hidden aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <h3>Lettura del file in corso</h3>
+        <p id="readProgressText">Apro il CSV e verifico le colonne…</p>
+      </section>
+
+      <section id="importReviewStep" hidden>
+        <div class="file-summary">
+          <i class="bi bi-file-earmark-check" aria-hidden="true"></i>
+          <div><strong id="reviewFileName">File CSV</strong><span id="reviewFileMeta"></span></div>
+          <button class="text-button" id="changeFileBtn" type="button">Cambia file</button>
+        </div>
+        <div class="import-totals">
+          <div><strong id="reviewAutoCount">0</strong><span>inclusione automatica</span></div>
+          <div><strong id="reviewOptionalCount">0</strong><span>altri settori</span></div>
+          <div><strong id="reviewExcludedCount">0</strong><span>righe escluse</span></div>
+        </div>
+        <details class="report-details">
+          <summary>Report completo del filtro<i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
+          <dl id="filterReport"></dl>
+        </details>
+        <fieldset class="sector-options" id="sectorOptionsWrap">
+          <legend>Altri settori da includere <span>(facoltativo)</span></legend>
+          <p>I settori PLOTTER, INSEGNE e FURGONE sono già inclusi.</p>
+          <div class="sector-actions">
+            <button class="text-button" id="selectAllSectorsBtn" type="button">Seleziona tutti</button>
+            <button class="text-button" id="selectNoSectorsBtn" type="button">Deseleziona tutti</button>
+          </div>
+          <div class="sector-list" id="sectorList"></div>
+        </fieldset>
+        <div class="selection-summary" id="selectionSummary" aria-live="polite"></div>
+      </section>
+
+      <section class="processing-state" id="importWriteStep" hidden aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <h3 id="writeTitle">Salvataggio su Supabase</h3>
+        <p id="writeProgressText">Preparo gli ordini…</p>
+        <progress id="writeProgress" max="100" value="0"></progress>
+        <p class="safety-note"><i class="bi bi-shield-check" aria-hidden="true"></i>I dati precedenti vengono eliminati solo dopo la scrittura dei nuovi.</p>
+      </section>
+
+      <details class="debug-details" id="debugDetails">
+        <summary>Dettaglio operazioni</summary>
+        <ol id="debugLog" aria-live="polite"></ol>
+      </details>
+      <div class="inline-error" id="importError" hidden role="alert"></div>
+    </div>
+
+    <div class="dialog-footer" id="importReviewFooter" hidden>
+      <button class="button button-secondary" type="button" data-close-dialog>Annulla</button>
+      <button class="button button-primary" id="confirmImportBtn" type="button"><i class="bi bi-cloud-upload" aria-hidden="true"></i><span>Importa ordini</span></button>
+    </div>
+  </dialog>
+
+  <dialog class="dialog dialog-small" id="conflictDialog" aria-labelledby="conflictTitle">
+    <div class="dialog-header">
+      <div><p class="section-label">Dati manuali presenti</p><h2 id="conflictTitle">Cosa vuoi conservare?</h2></div>
+      <button class="dialog-close" type="button" data-close-dialog aria-label="Annulla importazione"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+    </div>
+    <div class="dialog-body">
+      <p id="conflictText"></p>
+      <div class="notice"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Date di evasione, descrizioni brevi e note interne vengono considerate dati manuali.</span></div>
+    </div>
+    <div class="dialog-footer stacked-mobile">
+      <button class="button button-secondary" type="button" data-close-dialog>Annulla</button>
+      <button class="button button-danger-quiet" id="overwriteImportBtn" type="button">Sovrascrivi tutto</button>
+      <button class="button button-primary" id="preserveImportBtn" type="button">Mantieni dati manuali</button>
+    </div>
+  </dialog>
+
+  <dialog class="dialog dialog-small" id="clearDialog" aria-labelledby="clearTitle">
+    <div class="dialog-header">
+      <div><p class="section-label">Operazione irreversibile</p><h2 id="clearTitle">Svuota il database?</h2></div>
+      <button class="dialog-close" type="button" data-close-dialog aria-label="Chiudi"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+    </div>
+    <div class="dialog-body">
+      <p id="clearText">Verranno eliminati tutti gli ordini, le date, le descrizioni, le note e il timestamp di importazione.</p>
+      <div class="notice notice-danger" id="clearNotice"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><span>Questa operazione non può essere annullata.</span></div>
+    </div>
+    <div class="dialog-footer">
+      <button class="button button-secondary" type="button" data-close-dialog>Annulla</button>
+      <button class="button button-danger" id="confirmClearBtn" type="button">Continua</button>
+    </div>
+  </dialog>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+  <noscript><div class="noscript">Per usare Piano grafica devi attivare JavaScript nel browser.</div></noscript>
+</body>
+</html>
