@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f7f5">
+<title>Pistone · Ordini grafica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --p-ink:oklch(0.18 0 0);--p-paper:oklch(0.995 0.002 95);--p-muted:oklch(0.97 0.003 95);--p-line:oklch(0.88 0.004 95);
+  --p-secondary:oklch(0.48 0.005 95);--p-amber:oklch(0.55 0.12 75);--p-red:oklch(0.5 0.19 25);--p-green:oklch(0.43 0.1 155);
+  --bg:var(--p-paper);--surface:var(--p-paper);--surface-subtle:var(--p-muted);--text:var(--p-ink);--text-secondary:var(--p-secondary);
+  --border:var(--p-line);--accent:var(--p-ink);--warning:var(--p-amber);--danger:var(--p-red);--success:var(--p-green);
+  --warning-bg:oklch(0.96 0.035 90);--danger-bg:oklch(0.96 0.025 25);--success-bg:oklch(0.95 0.025 155);
+  --radius:8px;--shadow:0 16px 50px oklch(0.18 0 0 / .14);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{min-height:100dvh;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
+button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.45}
+button,a,input,textarea,select{outline:none}:focus-visible{outline:3px solid oklch(0.55 0.12 75);outline-offset:3px}
+.hidden{display:none!important}.container{width:min(100% - 32px,980px);margin-inline:auto}
+.topbar{border-bottom:1px solid var(--border);background:oklch(0.995 0.002 95 / .94);position:sticky;top:0;z-index:20;backdrop-filter:blur(12px)}
+.topbar-inner{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}.brand-mark{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;letter-spacing:-1.5px}
+.brand-copy{border-left:1px solid var(--border);padding-left:11px;line-height:1.15}.brand-copy strong{display:block;font-size:13px}.brand-copy span{font-size:11px;color:var(--text-secondary)}
+.top-actions{display:flex;align-items:center;gap:6px}.icon-btn{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--text);border-radius:var(--radius);font-size:18px;transition:background .18s,color .18s}
+.icon-btn:hover{background:var(--surface-subtle)}.icon-btn.danger:hover{background:var(--danger-bg);color:var(--danger)}
+.connection{display:none;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);margin-right:4px}.connection::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--success)}
+.connection.error::before{background:var(--danger)}
+main{padding-block:28px 64px}.page-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:24px}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;line-height:1.15;letter-spacing:-.025em}h1{font-size:clamp(27px,6vw,40px);font-weight:600}h2{font-size:19px}h3{font-size:16px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px}.subtle{color:var(--text-secondary);font-size:13px}.page-heading .subtle{margin-top:7px}
+.btn{min-height:44px;border:1px solid var(--border);border-radius:var(--radius);padding:10px 15px;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--surface);color:var(--text);font-size:13px;font-weight:600;transition:background .18s,color .18s,border-color .18s,transform .18s}
+.btn:hover{background:var(--surface-subtle)}.btn:active{transform:scale(.98)}.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--p-paper)}.btn-primary:hover{background:oklch(0.3 0 0)}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:var(--p-paper)}.btn-danger:hover{background:oklch(0.43 0.18 25)}.btn-success{background:var(--success);border-color:var(--success);color:var(--p-paper)}
+.btn-small{min-height:36px;padding:6px 11px;font-size:12px}.btn-block{width:100%}
+.stale-banner{display:flex;align-items:flex-start;gap:10px;background:var(--danger);color:var(--p-paper);padding:13px 15px;border-radius:var(--radius);margin-bottom:20px;font-size:13px;font-weight:600}.stale-banner i{font-size:18px}.stale-banner small{display:block;font-weight:400;opacity:.9;margin-top:2px}
+body.stale{--bg:var(--danger-bg);--surface-subtle:oklch(0.93 0.035 25)}body.stale .order-row{border-color:oklch(0.8 0.08 25)}
+.import-section{border-block:1px solid var(--border);padding-block:20px;margin-bottom:24px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.section-head h2{display:flex;align-items:center;gap:8px}.section-head h2 i{font-family:inherit;font-size:17px}
+.dropzone{min-height:116px;border:1px dashed oklch(0.65 0.005 95);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;gap:14px;text-align:left;padding:20px;cursor:pointer;background:var(--surface-subtle);transition:border-color .18s,background .18s}
+.dropzone:hover,.dropzone.dragover{border-color:var(--text);background:oklch(0.94 0.003 95)}.dropzone>i{font-size:28px}.dropzone strong{display:block;font-size:14px}.dropzone span{font-size:12px;color:var(--text-secondary)}#csvFile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.progress-panel{border:1px solid var(--border);background:var(--surface);padding:14px;border-radius:var(--radius);margin-top:12px}.progress-line{display:flex;justify-content:space-between;gap:12px;font-size:12px;margin-bottom:9px}.progress-line strong{font-size:13px}.progress-track{height:4px;background:var(--surface-subtle);overflow:hidden}.progress-fill{height:100%;width:0;background:var(--text);transition:width .2s ease-out}
+.review{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:28px;overflow:hidden;background:var(--surface)}.review-head{padding:18px;border-bottom:1px solid var(--border)}.review-title-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.file-name{font-size:12px;color:var(--text-secondary);margin-top:5px;word-break:break-all}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);border-top:1px solid var(--border);margin-top:16px}.stat{padding:13px 8px 0}.stat:nth-child(odd){border-right:1px solid var(--border)}.stat strong{font-family:'Space Grotesk',sans-serif;font-size:24px;display:block;line-height:1.1}.stat span{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary)}
+.review-notice{display:flex;gap:10px;padding:13px 18px;background:var(--warning-bg);color:oklch(0.38 0.1 70);font-size:12px;border-bottom:1px solid oklch(0.87 0.07 85)}.review-notice i{font-size:17px;flex-shrink:0}
+.review-tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--border);scrollbar-width:none}.review-tab{min-height:46px;white-space:nowrap;border:0;border-bottom:2px solid transparent;background:transparent;padding:10px 16px;font-size:12px;font-weight:600;color:var(--text-secondary)}.review-tab.active{color:var(--text);border-bottom-color:var(--text)}
+.bulk-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--surface-subtle)}.check-label{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;margin-right:auto;min-height:36px}.check-label input,.review-check{width:18px;height:18px;accent-color:var(--text)}
+.review-list{max-height:520px;overflow:auto}.review-row{display:grid;grid-template-columns:auto 1fr;gap:11px;padding:14px 18px;border-bottom:1px solid var(--border)}.review-row:last-child{border-bottom:0}.review-main{min-width:0}.review-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.order-number{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px}.client{font-weight:600;font-size:14px;margin-top:3px;overflow-wrap:anywhere}.meta-line{font-size:11px;color:var(--text-secondary);margin-top:4px}.review-reason{font-size:11px;color:var(--warning);margin-top:5px}.row-actions{grid-column:2;display:flex;gap:7px;margin-top:8px}
+.badge{display:inline-flex;align-items:center;min-height:22px;padding:2px 7px;border:1px solid var(--border);border-radius:4px;font-size:10px;font-weight:600;white-space:nowrap}.badge-warning{background:var(--warning-bg);border-color:oklch(0.87 0.07 85);color:oklch(0.4 0.1 70)}.badge-success{background:var(--success-bg);color:var(--success)}.badge-muted{background:var(--surface-subtle);color:var(--text-secondary)}
+.skip-summary{padding:16px 18px}.skip-row{display:flex;justify-content:space-between;gap:20px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}.skip-row:last-child{border:0}.skip-row span:last-child{font-weight:700;flex-shrink:0}
+.review-footer{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--border);background:var(--surface-subtle)}.review-footer .btn-primary{flex:1}
+.orders-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}.orders-head h2{font-size:24px}.orders-head .subtle{margin-top:3px}.orders-tools{display:flex;gap:8px;margin-bottom:14px}.search{position:relative;flex:1}.search i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-secondary)}.search input{width:100%;min-height:44px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);padding:10px 12px 10px 38px;font-size:13px;color:var(--text)}
+.order-stats{display:flex;gap:20px;margin-bottom:14px;font-size:12px;color:var(--text-secondary)}.order-stats strong{color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:17px;margin-right:4px}
+.orders-list{border-top:1px solid var(--border)}.order-row{border-bottom:1px solid var(--border);background:var(--surface)}.order-summary{width:100%;display:grid;grid-template-columns:1fr auto;gap:12px;text-align:left;padding:16px 4px;border:0;background:transparent;color:var(--text)}.order-summary:hover{background:var(--surface-subtle)}.order-client{font-size:15px;margin-top:3px}.order-desc{font-size:12px;color:var(--text-secondary);margin-top:4px;font-weight:400}.order-side{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:7px}.evasion{font-size:11px;font-weight:600}.evasion.missing{color:var(--warning)}
+.order-edit{display:none;padding:0 4px 18px}.order-row.expanded .order-edit{display:grid;gap:12px}.order-row.expanded .order-summary{background:var(--surface-subtle)}.edit-grid{display:grid;gap:10px}.field{display:grid;gap:5px}.field label{font-size:11px;font-weight:600;color:var(--text-secondary)}.field input,.field textarea,.field select{width:100%;min-height:44px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);padding:9px 11px;font-size:13px}.field textarea{min-height:76px;resize:vertical}.edit-actions{display:flex;gap:8px}.edit-actions .btn-primary{flex:1}.delete-order{margin-left:auto}
+.empty{padding:48px 16px;text-align:center;border-bottom:1px solid var(--border)}.empty i{font-size:30px;color:var(--text-secondary);display:block;margin-bottom:12px}.empty h3{margin-bottom:6px}.empty p{font-size:13px;color:var(--text-secondary)}
+.log{margin-top:28px;border-top:1px solid var(--border);padding-top:14px}.log summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--text-secondary)}.log-list{max-height:260px;overflow:auto;background:oklch(0.18 0 0);color:oklch(0.9 0 0);padding:12px;border-radius:6px;font:11px/1.6 monospace}.log-entry{white-space:pre-wrap;overflow-wrap:anywhere}.log-entry.error{color:oklch(0.78 0.12 25)}.log-entry.success{color:oklch(0.82 0.1 155)}.log-entry.warning{color:oklch(0.84 0.1 85)}
+.modal-bg{position:fixed;inset:0;z-index:100;background:oklch(0.12 0 0 / .48);display:none;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom));backdrop-filter:blur(3px)}.modal-bg.active{display:flex}.modal{background:var(--surface);width:100%;max-width:520px;max-height:90dvh;overflow:auto;border-radius:12px;padding:20px;box-shadow:var(--shadow)}.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.modal-body{font-size:13px;color:var(--text-secondary);line-height:1.6}.modal-form{display:grid;gap:12px;margin-top:16px}.modal-actions{display:flex;flex-direction:column-reverse;gap:8px;margin-top:20px}.modal-actions .btn{width:100%}
+.toast{position:fixed;z-index:200;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translate(-50%,16px);width:max-content;max-width:calc(100% - 32px);background:var(--text);color:var(--p-paper);border-radius:var(--radius);padding:12px 16px;font-size:13px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}.toast.show{opacity:1;transform:translate(-50%,0)}.toast.error{background:var(--danger)}.toast.warning{background:oklch(0.4 0.1 70)}
+@media(min-width:560px){.connection{display:inline-flex}.stats{grid-template-columns:repeat(4,1fr)}.stat{border-right:1px solid var(--border);padding:14px 12px 0}.stat:last-child{border-right:0}.edit-grid{grid-template-columns:1fr 1fr}.field.full{grid-column:1/-1}.modal-bg{align-items:center}.modal-actions{flex-direction:row;justify-content:flex-end}.modal-actions .btn{width:auto}.review-row{grid-template-columns:auto 1fr auto;align-items:center}.row-actions{grid-column:3;margin-top:0}.bulk-bar{flex-wrap:nowrap}}
+@media(min-width:760px){.container{width:min(100% - 56px,980px)}main{padding-top:40px}.import-section{padding-block:24px}.dropzone{min-height:104px}.review-head{padding:22px}.order-summary{grid-template-columns:minmax(0,1fr) 180px;padding:17px 8px}.order-edit{padding-inline:8px}.orders-tools{max-width:520px}.btn-small{min-height:38px}.review-footer{padding:16px 22px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbar-inner">
+    <div class="brand" aria-label="Pistone Ordini grafica">
+      <div class="brand-mark">P/</div><div class="brand-copy"><strong>Ordini grafica</strong><span>Area operativa</span></div>
+    </div>
+    <div class="top-actions">
+      <span class="connection" id="connectionStatus">Connesso</span>
+      <button class="icon-btn" id="refreshBtn" title="Aggiorna ordini" aria-label="Aggiorna ordini"><i class="bi bi-arrow-clockwise"></i></button>
+      <button class="icon-btn danger" id="clearBtn" title="Svuota database" aria-label="Svuota database"><i class="bi bi-trash3"></i></button>
+    </div>
+  </div>
+</header>
+<main class="container">
+  <div class="stale-banner hidden" id="staleBanner" role="alert"><i class="bi bi-exclamation-triangle-fill"></i><div>ATTENZIONE: DATI NON AGGIORNATI<small>Ultimo caricamento oltre 24 ore fa.</small></div></div>
+  <div class="page-heading">
+    <div><div class="eyebrow">Pistone gestionale</div><h1>Lavori in carico</h1><p class="subtle" id="lastUpdate">Connessione al database…</p></div>
+    <button class="btn" id="manualBtn"><i class="bi bi-plus-lg"></i><span>Aggiungi</span></button>
+  </div>
+
+  <section class="import-section" aria-labelledby="importTitle">
+    <div class="section-head"><h2 id="importTitle"><i class="bi bi-filetype-csv"></i>Importa da Danea</h2><span class="subtle">Sostituisce gli ordini CSV</span></div>
+    <label class="dropzone" id="dropzone" for="csvFile">
+      <i class="bi bi-cloud-arrow-up"></i><div><strong>Seleziona il file CSV</strong><span>oppure trascinalo qui · prima vedrai un’anteprima</span></div>
+    </label>
+    <input type="file" id="csvFile" accept=".csv,.txt,text/csv">
+    <div class="progress-panel hidden" id="progressPanel" aria-live="polite">
+      <div class="progress-line"><strong id="progressTitle">Elaborazione…</strong><span id="progressText"></span></div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </section>
+
+  <section class="review hidden" id="reviewPanel" aria-labelledby="reviewTitle">
+    <div class="review-head">
+      <div class="review-title-row"><div><h2 id="reviewTitle">Controlla prima di importare</h2><div class="file-name" id="reviewFile"></div></div><button class="icon-btn" id="cancelReviewTop" aria-label="Annulla importazione"><i class="bi bi-x-lg"></i></button></div>
+      <div class="stats" id="reviewStats"></div>
+    </div>
+    <div class="review-notice hidden" id="reviewNotice"><i class="bi bi-shield-exclamation"></i><div><strong>Serve la tua verifica.</strong><br>Gli ordini con grafico completato e i file “selezione-3” restano incerti finché non li approvi o li scarti.</div></div>
+    <div class="review-tabs" role="tablist" aria-label="Risultati importazione">
+      <button class="review-tab" data-tab="uncertain" role="tab">Da verificare <span id="tabUncertain"></span></button>
+      <button class="review-tab active" data-tab="ready" role="tab">Pronti <span id="tabReady"></span></button>
+      <button class="review-tab" data-tab="rejected" role="tab">Scartati da te <span id="tabRejected"></span></button>
+      <button class="review-tab" data-tab="skipped" role="tab">Regole di esclusione</button>
+    </div>
+    <div class="bulk-bar hidden" id="bulkBar">
+      <label class="check-label"><input type="checkbox" id="selectAllReview">Seleziona tutti</label>
+      <button class="btn btn-small btn-success" id="approveSelected"><i class="bi bi-check-lg"></i>Approva</button>
+      <button class="btn btn-small" id="rejectSelected"><i class="bi bi-x-lg"></i>Scarta</button>
+    </div>
+    <div class="review-list" id="reviewList"></div>
+    <div class="review-footer"><button class="btn" id="cancelReview">Annulla</button><button class="btn btn-primary" id="importBtn"><i class="bi bi-database-add"></i><span>Importa</span></button></div>
+  </section>
+
+  <section aria-labelledby="ordersTitle">
+    <div class="orders-head"><div><h2 id="ordersTitle">Pianificazione</h2><p class="subtle">Ordinati per data di evasione grafica</p></div></div>
+    <div class="orders-tools"><label class="search"><i class="bi bi-search"></i><input type="search" id="searchInput" placeholder="Cerca ordine, cliente, note…" aria-label="Cerca ordini"></label></div>
+    <div class="order-stats" id="orderStats"></div>
+    <div class="orders-list" id="ordersList"><div class="empty"><i class="bi bi-arrow-repeat"></i><h3>Caricamento ordini</h3><p>Attendi la risposta del database.</p></div></div>
+  </section>
+
+  <details class="log" id="logDetails"><summary><i class="bi bi-terminal"></i>Report operazioni <span id="logCount"></span></summary><div class="log-list" id="logList" aria-live="polite"></div></details>
+</main>
+
+<div class="modal-bg" id="modalBg">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head"><h2 id="modalTitle"></h2><button class="icon-btn" id="modalClose" aria-label="Chiudi finestra"><i class="bi bi-x-lg"></i></button></div>
+    <div class="modal-body" id="modalBody"></div><div class="modal-actions" id="modalActions"></div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+const SUPABASE_URL="https://emaiswhuznyqkzzzelvh.supabase.co";
+const SUPABASE_KEY="sb_publishable_7xF7dZXBDOahRmdanK-cFw_jx0sO0Cw";
+const $=id=>document.getElementById(id);
+const currentYear=new Date().getFullYear();
+const previousYearCutoff=new Date(currentYear-1,9,1);
+let db=null,allOrders=[],pendingImport=null,customMap={},activeReviewTab="ready",selectedReview=new Set(),logEntries=0,toastTimer=null,lastFocused=null;
+
+function escapeHtml(value){return String(value??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
+function normalize(value){return String(value??"").toUpperCase().replace(/\s+/g," ").trim();}
+function errorText(error){if(!error)return"Errore sconosciuto";return[error.message,error.details,error.hint,error.code&&`Codice ${error.code}`].filter(Boolean).join(" · ");}
+function toast(message,type="success"){clearTimeout(toastTimer);const el=$("toast");el.textContent=message;el.className=`toast show ${type}`;toastTimer=setTimeout(()=>el.className="toast",4200);}
+function addLog(message,type="info"){
+  const time=new Date().toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  const row=document.createElement("div");row.className=`log-entry ${type}`;row.textContent=`[${time}] ${message}`;$("logList").prepend(row);
+  while($("logList").children.length>120)$("logList").lastChild.remove();logEntries++;$("logCount").textContent=`(${logEntries})`;
+  if(type==="error")$("logDetails").open=true;
+}
+function setProgress(title,text="",percent=0){$("progressPanel").classList.remove("hidden");$("progressTitle").textContent=title;$("progressText").textContent=text;$("progressFill").style.width=`${percent}%`;}
+function hideProgress(){$("progressPanel").classList.add("hidden");$("progressFill").style.width="0%";}
+function setConnection(ok,label){const el=$("connectionStatus");el.classList.toggle("error",!ok);el.textContent=label;}
+function requireDb(){if(!db)throw new Error("Database non disponibile. Controlla la connessione e ricarica la pagina.");}
+
+function parseItalianDate(value){
+  const match=String(value??"").trim().match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);if(!match)return null;
+  let year=Number(match[3]);if(year<100)year+=2000;const month=Number(match[2]),day=Number(match[1]);
+  const date=new Date(year,month-1,day);if(date.getFullYear()!==year||date.getMonth()!==month-1||date.getDate()!==day)return null;return date;
+}
+function isoDate(date){return`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;}
+function parseCsv(text){
+  const first=text.split(/\r?\n/,1)[0]||"";const candidates=[",",";","\t"];const delimiter=candidates.sort((a,b)=>first.split(b).length-first.split(a).length)[0];
+  const rows=[];let row=[],field="",quoted=false;
+  for(let i=0;i<text.length;i++){
+    const char=text[i];
+    if(char==='"'){if(quoted&&text[i+1]==='"'){field+='"';i++;}else quoted=!quoted;}
+    else if(char===delimiter&&!quoted){row.push(field);field="";}
+    else if((char==='\n'||char==='\r')&&!quoted){if(char==='\r'&&text[i+1]==='\n')i++;row.push(field);field="";if(row.some(v=>v.trim()!==""))rows.push(row);row=[];}
+    else field+=char;
+  }
+  row.push(field);if(row.some(v=>v.trim()!==""))rows.push(row);return rows;
+}
+function hasValidSector(sector){return/PLOTTER|INSEGNE|FURGONE/i.test(sector||"");}
+function globalStateValid(state){const s=normalize(state);return!!s&&!/CONCLUSO|ANNULLATO|SOSPESO/.test(s)&&/CONFERMATO|CONFERMARE/.test(s);}
+function onlyConfirmed(state){const s=normalize(state);return globalStateValid(state)&&s==="CONFERMATO";}
+function confirmedOrPending(state){const s=normalize(state);return globalStateValid(state)&&(s==="CONFERMATO"||s==="DA CONFERMARE");}
+function isCompletedGraphic(graphic){return["ALBERTO - COMPLETATO","PIETRO - COMPLETATO","SAMUELE - COMPLETATO","COMPLETATO"].includes(normalize(graphic));}
+function findSector(fields,start){
+  const targets=["PLOTTER","INSEGNE","FURGONE","DIGITALE","DTF","RICAMO","SERIGRAFIA","STAMPA UV","STAMPA DIRETTA","SUBLIMAZIONE","POLIFLEX","LITOGRAFIA","TIMBRI"];
+  const found=[];for(let i=start;i<fields.length;i++){const value=(fields[i]||"").trim(),up=normalize(value);if(targets.some(target=>up.includes(target))&&!found.includes(value))found.push(value);}return found.join(" · ");
+}
+function classifyOrder(fields){
+  let dateIndex=-1;for(let i=0;i<Math.min(3,fields.length);i++){if(parseItalianDate(fields[i])){dateIndex=i;break;}}
+  if(dateIndex<0)return{ignored:true};
+  const date=parseItalianDate(fields[dateIndex]),number=(fields[dateIndex+2]||"").trim(),state=(fields[dateIndex+3]||"").trim(),graphic=(fields[dateIndex+4]||"").trim();
+  const client=(fields[dateIndex+6]||"").trim(),note=(fields[dateIndex+7]||"").trim(),sector=findSector(fields,dateIndex+9),numberUp=normalize(number),graphicUp=normalize(graphic);
+  if(!number)return{valid:false,reason:"Numero ordine mancante"};
+  if(numberUp.includes("/B"))return{valid:false,reason:"Numerazione /B"};
+  if(!globalStateValid(state))return{valid:false,reason:`Stato escluso: ${state||"non indicato"}`};
+  if(!hasValidSector(sector))return{valid:false,reason:"Settore diverso da Plotter, Insegne o Furgone"};
+  let situation=0;
+  if(!graphicUp){if(!/^\d+$/.test(number)||!onlyConfirmed(state))return{valid:false,reason:"Senza grafico: servono numero e stato Confermato"};situation=1;}
+  else if(["ALBERTO","PIETRO","SAMUELE"].includes(graphicUp))situation=2;
+  else if(isCompletedGraphic(graphicUp)){
+    if(!/^\d+$/.test(number))return{valid:false,reason:"Completato: numero non valido"};
+    if(!confirmedOrPending(state))return{valid:false,reason:"Completato: stato non valido"};
+    if(!(date.getFullYear()===currentYear||(date.getFullYear()===currentYear-1&&date>=previousYearCutoff)))return{valid:false,reason:"Completato: fuori dal periodo consentito"};situation=3;
+  }else return{valid:false,reason:`Grafico escluso: ${graphic}`};
+  return{valid:true,situation,data:{numero_ordine:number,anno_ordine:date.getFullYear(),cliente:client||"Cliente non indicato",data_ordine:isoDate(date),data_evasione_grafica:null,grafico:graphic,stato:state,settore:sector,note_interne:"",descrizione_breve:note,inserito_manuale:false}};
+}
+function processCsvText(text,fileName){
+  const rows=parseCsv(text.replace(/^\uFEFF/,""));const map=new Map(),reasons={};let orderRows=0,skipped=0;
+  rows.forEach(fields=>{const result=classifyOrder(fields);if(result.ignored)return;orderRows++;
+    if(!result.valid){skipped++;reasons[result.reason]=(reasons[result.reason]||0)+1;return;}
+    const key=`${result.data.numero_ordine}_${result.data.anno_ordine}`;const existing=map.get(key);
+    if(!existing||result.data.data_ordine>existing.data.data_ordine)map.set(key,result.data);
+  });
+  const sourceUncertain=/selezione[\s_-]*3/i.test(fileName);
+  const valid=Array.from(map.values()).map((data,index)=>({data,situation:0,review:isCompletedGraphic(data.grafico)||sourceUncertain?"uncertain":"certain",reviewReason:sourceUncertain?"File selezione-3: verifica obbligatoria":"Grafico completato: verifica obbligatoria",uid:`row-${index}-${data.numero_ordine}-${data.anno_ordine}`}));
+  return{fileName,totalRows:rows.length,orderRows,valid,skipped,reasons};
+}
+async function decodeCsvFile(file){
+  const buffer=await file.arrayBuffer();try{return new TextDecoder("utf-8",{fatal:true}).decode(buffer);}catch{return new TextDecoder("windows-1252").decode(buffer);}
+}
+async function handleFile(file){
+  if(!file)return;if(!/\.(csv|txt)$/i.test(file.name)){toast("Seleziona un file CSV esportato da Danea.","error");return;}
+  try{
+    setProgress("Lettura del file",file.name,15);addLog(`Lettura ${file.name} (${file.size} byte)`);
+    const text=await decodeCsvFile(file);setProgress("Analisi degli ordini","Applicazione delle regole…",55);await new Promise(resolve=>setTimeout(resolve,30));
+    const result=processCsvText(text,file.name);if(!result.valid.length)throw new Error("Nessun ordine valido trovato. Apri il report per verificare il file.");
+    pendingImport=result;selectedReview.clear();activeReviewTab=result.valid.some(item=>item.review==="uncertain")?"uncertain":"ready";
+    addLog(`${result.valid.length} ordini validi; ${result.valid.filter(x=>x.review==="uncertain").length} incerti; ${result.skipped} esclusi`,"success");
+    renderReview();setProgress("Analisi completata",`${result.valid.length} ordini pronti per la verifica`,100);setTimeout(hideProgress,500);
+    $("reviewPanel").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(error){hideProgress();addLog(errorText(error),"error");toast(errorText(error),"error");}
+}
+function reviewItems(tab){if(!pendingImport)return[];if(tab==="uncertain")return pendingImport.valid.filter(x=>x.review==="uncertain");if(tab==="ready")return pendingImport.valid.filter(x=>x.review==="certain"||x.review==="approved");if(tab==="rejected")return pendingImport.valid.filter(x=>x.review==="rejected");return[];}
+function reviewRow(item){
+  const d=item.data,uncertain=item.review==="uncertain",rejected=item.review==="rejected";
+  const status=uncertain?'<span class="badge badge-warning">Incerto</span>':rejected?'<span class="badge badge-muted">Scartato</span>':'<span class="badge badge-success">Pronto</span>';
+  return`<article class="review-row"><div>${uncertain?`<input class="review-check" type="checkbox" aria-label="Seleziona ordine ${escapeHtml(d.numero_ordine)}" data-review-check="${item.uid}" ${selectedReview.has(item.uid)?"checked":""}>`:""}</div><div class="review-main"><div class="review-top"><span class="order-number">N. ${escapeHtml(d.numero_ordine)}</span>${status}<span class="badge">${escapeHtml(d.settore)}</span></div><div class="client">${escapeHtml(d.cliente)}</div><div class="meta-line">${formatDate(d.data_ordine)} · ${escapeHtml(d.stato)} · ${escapeHtml(graphicLabel(d.grafico))}</div>${uncertain?`<div class="review-reason">${escapeHtml(item.reviewReason)}</div>`:""}</div><div class="row-actions">${uncertain?`<button class="btn btn-small btn-success" data-review-action="approve" data-uid="${item.uid}">Approva</button><button class="btn btn-small" data-review-action="reject" data-uid="${item.uid}">Scarta</button>`:rejected?`<button class="btn btn-small" data-review-action="restore" data-uid="${item.uid}">Ripristina</button>`:""}</div></article>`;
+}
+function renderReview(){
+  if(!pendingImport){$("reviewPanel").classList.add("hidden");return;}const r=pendingImport,uncertain=reviewItems("uncertain").length,ready=reviewItems("ready").length,rejected=reviewItems("rejected").length;
+  $("reviewPanel").classList.remove("hidden");$("reviewFile").textContent=`${r.fileName} · ${r.orderRows.toLocaleString("it-IT")} righe ordine analizzate`;
+  $("reviewStats").innerHTML=[[r.valid.length,"Validi"],[ready,"Pronti"],[uncertain,"Incerti"],[r.skipped,"Esclusi"]].map(([n,l])=>`<div class="stat"><strong>${n.toLocaleString("it-IT")}</strong><span>${l}</span></div>`).join("");
+  $("reviewNotice").classList.toggle("hidden",!uncertain);$("tabUncertain").textContent=`(${uncertain})`;$("tabReady").textContent=`(${ready})`;$("tabRejected").textContent=`(${rejected})`;
+  document.querySelectorAll("[data-tab]").forEach(btn=>{const active=btn.dataset.tab===activeReviewTab;btn.classList.toggle("active",active);btn.setAttribute("aria-selected",String(active));});
+  $("bulkBar").classList.toggle("hidden",activeReviewTab!=="uncertain"||!uncertain);
+  if(activeReviewTab==="skipped"){
+    const entries=Object.entries(r.reasons).sort((a,b)=>b[1]-a[1]);$("reviewList").innerHTML=`<div class="skip-summary">${entries.length?entries.map(([reason,count])=>`<div class="skip-row"><span>${escapeHtml(reason)}</span><span>${count}</span></div>`).join(""):"<p class='subtle'>Nessun ordine escluso dalle regole.</p>"}</div>`;
+  }else{
+    const items=reviewItems(activeReviewTab);$("reviewList").innerHTML=items.length?items.map(reviewRow).join(""):`<div class="empty"><i class="bi bi-inbox"></i><h3>Nessun ordine qui</h3><p>Controlla le altre schede dell’anteprima.</p></div>`;
+  }
+  const importButton=$("importBtn");importButton.disabled=uncertain>0||ready===0;importButton.querySelector("span").textContent=uncertain?`Verifica ${uncertain} ordini`:ready?`Importa ${ready} ordini`:"Nessun ordine da importare";
+  selectedReview=new Set([...selectedReview].filter(uid=>reviewItems("uncertain").some(x=>x.uid===uid)));$("selectAllReview").checked=uncertain>0&&selectedReview.size===uncertain;
+}
+function setReview(uid,action){const item=pendingImport?.valid.find(x=>x.uid===uid);if(!item)return;if(action==="approve")item.review="approved";if(action==="reject")item.review="rejected";if(action==="restore")item.review="uncertain";selectedReview.delete(uid);renderReview();}
+function bulkReview(action){
+  if(!selectedReview.size){toast("Seleziona almeno un ordine.","warning");return;}pendingImport.valid.forEach(item=>{if(selectedReview.has(item.uid))item.review=action==="approve"?"approved":"rejected";});selectedReview.clear();renderReview();
+}
+function cancelReview(){pendingImport=null;selectedReview.clear();$("reviewPanel").classList.add("hidden");hideProgress();}
+
+async function beginImport(){
+  if(!pendingImport)return;const uncertain=reviewItems("uncertain").length,readyItems=reviewItems("ready");if(uncertain){toast("Prima approva o scarta tutti gli ordini incerti.","warning");return;}if(!readyItems.length)return;
+  try{
+    requireDb();setProgress("Verifica dei dati esistenti","Lettura delle personalizzazioni…",8);const{data,error}=await db.from("ordini").select("*");if(error)throw error;
+    customMap={};(data||[]).forEach(row=>{const hasCustom=(row.note_interne||"").trim()||(row.descrizione_breve||"").trim()||row.data_evasione_grafica;if(hasCustom)customMap[`${row.numero_ordine}_${row.anno_ordine}`]={note_interne:row.note_interne||"",descrizione_breve:row.descrizione_breve||"",data_evasione_grafica:row.data_evasione_grafica};});
+    hideProgress();const count=Object.keys(customMap).length;
+    if(count)showModal({title:"Dati manuali trovati",body:`<p><strong>${count} ordini</strong> contengono note, descrizioni o date di evasione inserite manualmente.</p><p>Scegli se conservarli durante la sostituzione degli ordini CSV.</p>`,actions:[
+      {label:"Mantieni i dati salvati",className:"btn-primary",onClick:()=>runImport(true,data||[])},
+      {label:"Sovrascrivi tutto",className:"btn-danger",onClick:()=>runImport(false,data||[])},{label:"Annulla",className:"btn",onClick:()=>{}}
+    ]});else await runImport(false,data||[]);
+  }catch(error){hideProgress();addLog(`Importazione interrotta: ${errorText(error)}`,"error");toast(errorText(error),"error");}
+}
+async function insertBatches(rows,onProgress){
+  let inserted=0;for(let i=0;i<rows.length;i+=50){const batch=rows.slice(i,i+50);const{data,error}=await db.from("ordini").insert(batch).select("id");if(error)throw error;if(!data||data.length!==batch.length)throw new Error(`Inserimento non confermato: ricevuti ${data?.length||0} ID su ${batch.length} righe.`);inserted+=data.length;if(onProgress)onProgress(inserted);}
+  return inserted;
+}
+async function restoreCsvOrders(backup){
+  const{error:deleteError}=await db.from("ordini").delete().eq("inserito_manuale",false);if(deleteError)throw deleteError;if(backup.length)await insertBatches(backup);addLog(`Ripristino completato: ${backup.length} ordini CSV precedenti`,"warning");
+}
+async function runImport(keepCustom,existingRows){
+  const rows=reviewItems("ready").map(item=>({...item.data,inserito_manuale:false}));const backup=existingRows.filter(row=>!row.inserito_manuale);let changed=false;
+  try{
+    requireDb();setProgress("Preparazione importazione",`${rows.length} ordini approvati`,8);addLog(`Avvio importazione di ${rows.length} ordini; mantieni dati=${keepCustom}`);
+    if(keepCustom)rows.forEach(row=>{const saved=customMap[`${row.numero_ordine}_${row.anno_ordine}`];if(saved)Object.assign(row,saved);});
+    setProgress("Sostituzione ordini CSV","Gli ordini manuali restano invariati",16);const{error:deleteError}=await db.from("ordini").delete().eq("inserito_manuale",false);if(deleteError)throw deleteError;changed=true;
+    const inserted=await insertBatches(rows,value=>setProgress("Salvataggio nel database",`${value} di ${rows.length} ordini`,20+Math.round(value/rows.length*60)));
+    setProgress("Verifica del salvataggio","Rilettura degli ID inseriti…",86);const{data:check,error:checkError}=await db.from("ordini").select("id").eq("inserito_manuale",false);if(checkError)throw checkError;
+    if(!check||check.length!==rows.length)throw new Error(`Verifica fallita: il database contiene ${check?.length||0} ordini CSV invece di ${rows.length}.`);
+    const{error:metaError}=await db.from("meta").upsert({id:1,ultima_importazione:new Date().toISOString()});if(metaError)addLog(`Ordini salvati, aggiornamento data non riuscito: ${errorText(metaError)}`,"warning");
+    setProgress("Importazione verificata",`${inserted} ordini presenti nel database`,100);addLog(`Importazione completata e verificata: ${inserted} ordini`,"success");cancelReview();await Promise.all([loadOrders(),loadMeta()]);toast(`${inserted} ordini importati e verificati.`);setTimeout(hideProgress,800);
+  }catch(error){
+    addLog(`Errore durante il salvataggio: ${errorText(error)}`,"error");setProgress("Importazione non riuscita","Ripristino dei dati precedenti…",90);
+    if(changed){try{await restoreCsvOrders(backup);toast("Importazione annullata. Dati precedenti ripristinati.","warning");}catch(restoreError){addLog(`Ripristino non riuscito: ${errorText(restoreError)}`,"error");toast("Errore grave: controlla il report prima di riprovare.","error");}}
+    else toast(errorText(error),"error");await loadOrders();setTimeout(hideProgress,1600);
+  }
+}
+
+function formatDate(value){if(!value)return"—";const date=new Date(`${String(value).slice(0,10)}T12:00:00`);return Number.isNaN(date.getTime())?String(value):date.toLocaleDateString("it-IT",{day:"2-digit",month:"short",year:"numeric"});}
+function formatDateTime(value){if(!value)return"";const date=new Date(value);return Number.isNaN(date.getTime())?"":date.toLocaleString("it-IT",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});}
+function toDatetimeLocal(value){if(!value)return"";const date=new Date(value),local=new Date(date.getTime()-date.getTimezoneOffset()*60000);return local.toISOString().slice(0,16);}
+function graphicLabel(graphic){const g=normalize(graphic);if(!g)return"Da smistare";if(g==="COMPLETATO")return"Salvo G. · completato";return String(graphic).toLowerCase().replace(/(^|\s|-)\S/g,s=>s.toUpperCase());}
+async function loadOrders(){
+  try{requireDb();const{data,error}=await db.from("ordini").select("*");if(error)throw error;allOrders=data||[];setConnection(true,"Connesso");renderOrders();addLog(`Lettura database: ${allOrders.length} ordini`,"success");}
+  catch(error){setConnection(false,"Non connesso");addLog(`Lettura database non riuscita: ${errorText(error)}`,"error");$("ordersList").innerHTML=`<div class="empty"><i class="bi bi-cloud-slash"></i><h3>Database non raggiungibile</h3><p>${escapeHtml(errorText(error))}</p></div>`;$("orderStats").innerHTML="";}
+}
+async function loadMeta(){
+  if(!db)return;try{const{data,error}=await db.from("meta").select("ultima_importazione").eq("id",1).maybeSingle();if(error)throw error;updateFreshness(data?.ultima_importazione||null);}catch(error){addLog(`Data aggiornamento non disponibile: ${errorText(error)}`,"warning");$("lastUpdate").textContent="Data ultimo aggiornamento non disponibile";}
+}
+function updateFreshness(value){
+  const stale=!value||(Date.now()-new Date(value).getTime()>86400000);document.body.classList.toggle("stale",stale);$("staleBanner").classList.toggle("hidden",!stale);
+  $("lastUpdate").textContent=value?`Ultimo aggiornamento: ${formatDateTime(value)}`:"Nessun aggiornamento registrato";
+}
+function renderOrders(){
+  const query=normalize($("searchInput").value);const filtered=allOrders.filter(order=>!query||normalize([order.numero_ordine,order.cliente,order.grafico,order.settore,order.descrizione_breve,order.note_interne].join(" ")).includes(query));
+  filtered.sort((a,b)=>{if(a.data_evasione_grafica&&b.data_evasione_grafica)return new Date(a.data_evasione_grafica)-new Date(b.data_evasione_grafica);if(a.data_evasione_grafica)return-1;if(b.data_evasione_grafica)return 1;return(a.data_ordine||"").localeCompare(b.data_ordine||"")||Number(a.numero_ordine)-Number(b.numero_ordine);});
+  const missing=allOrders.filter(x=>!x.data_evasione_grafica).length;$("orderStats").innerHTML=`<span><strong>${allOrders.length}</strong>ordini</span><span><strong>${missing}</strong>da pianificare</span><span><strong>${filtered.length}</strong>visibili</span>`;
+  if(!filtered.length){$("ordersList").innerHTML=`<div class="empty"><i class="bi bi-inbox"></i><h3>${allOrders.length?"Nessun risultato":"Nessun ordine presente"}</h3><p>${allOrders.length?"Prova a modificare la ricerca.":"Importa un CSV Danea oppure aggiungi un ordine manualmente."}</p></div>`;return;}
+  $("ordersList").innerHTML=filtered.map(order=>{
+    const evasion=formatDateTime(order.data_evasione_grafica),description=order.descrizione_breve||"Nessuna descrizione breve";
+    return`<article class="order-row" data-order-id="${order.id}"><button class="order-summary" data-toggle-order="${order.id}" aria-expanded="false"><div><div class="review-top"><span class="order-number">N. ${escapeHtml(order.numero_ordine)}</span><span class="badge">${escapeHtml(order.settore||"—")}</span>${order.inserito_manuale?'<span class="badge badge-muted">Manuale</span>':""}</div><div class="client order-client">${escapeHtml(order.cliente)}</div><div class="order-desc">${escapeHtml(description)}</div><div class="meta-line">${escapeHtml(graphicLabel(order.grafico))} · ${formatDate(order.data_ordine)}</div></div><div class="order-side"><span class="evasion ${evasion?"":"missing"}">${evasion||"Da pianificare"}</span><i class="bi bi-chevron-down" aria-hidden="true"></i></div></button><div class="order-edit"><div class="edit-grid"><div class="field"><label for="evade_${order.id}">Data e ora evasione grafica</label><input id="evade_${order.id}" data-field="evasion" type="datetime-local" value="${toDatetimeLocal(order.data_evasione_grafica)}"></div><div class="field"><label>Stato ordine</label><input value="${escapeHtml(order.stato||"")}" disabled></div><div class="field full"><label for="desc_${order.id}">Descrizione breve</label><input id="desc_${order.id}" data-field="description" value="${escapeHtml(order.descrizione_breve||"")}" placeholder="Visibile sotto il cliente"></div><div class="field full"><label for="note_${order.id}">Note interne</label><textarea id="note_${order.id}" data-field="notes" placeholder="Note operative riservate">${escapeHtml(order.note_interne||"")}</textarea></div></div><div class="edit-actions"><button class="btn btn-primary" data-save-order="${order.id}"><i class="bi bi-check-lg"></i>Salva modifiche</button><button class="btn delete-order" data-delete-order="${order.id}" aria-label="Elimina ordine ${escapeHtml(order.numero_ordine)}"><i class="bi bi-trash3"></i></button></div></div></article>`;
+  }).join("");
+}
+async function saveOrder(id,article){
+  try{requireDb();const evasion=article.querySelector('[data-field="evasion"]').value,description=article.querySelector('[data-field="description"]').value.trim(),notes=article.querySelector('[data-field="notes"]').value;
+    const{data,error}=await db.from("ordini").update({data_evasione_grafica:evasion?new Date(evasion).toISOString():null,descrizione_breve:description,note_interne:notes}).eq("id",id).select("id");if(error)throw error;if(!data?.length)throw new Error("Nessuna riga aggiornata: ordine non trovato o permesso negato.");toast("Modifiche salvate.");await loadOrders();
+  }catch(error){addLog(`Salvataggio ordine ${id}: ${errorText(error)}`,"error");toast(errorText(error),"error");}
+}
+function confirmDelete(id){const order=allOrders.find(x=>String(x.id)===String(id));showModal({title:"Eliminare questo ordine?",body:`<p>L’ordine <strong>N. ${escapeHtml(order?.numero_ordine||id)}</strong> verrà eliminato definitivamente.</p>`,actions:[{label:"Elimina ordine",className:"btn-danger",onClick:()=>deleteOrder(id)},{label:"Annulla",className:"btn",onClick:()=>{}}]});}
+async function deleteOrder(id){try{requireDb();const{error}=await db.from("ordini").delete().eq("id",id);if(error)throw error;toast("Ordine eliminato.");await loadOrders();}catch(error){addLog(errorText(error),"error");toast(errorText(error),"error");}}
+function confirmClear(){showModal({title:"Svuotare il database?",body:"<p>Verranno eliminati <strong>tutti gli ordini</strong>, compresi quelli manuali e le note interne. Questa è la prima conferma.</p>",actions:[{label:"Continua",className:"btn-danger",onClick:confirmClearSecond},{label:"Annulla",className:"btn",onClick:()=>{}}]});}
+function confirmClearSecond(){showModal({title:"Seconda conferma",body:"<p>L’operazione è irreversibile. Confermi di voler cancellare definitivamente tutto il contenuto?</p>",actions:[{label:"Sì, svuota tutto",className:"btn-danger",onClick:clearDatabase},{label:"Annulla",className:"btn",onClick:()=>{}}]});}
+async function clearDatabase(){try{requireDb();setProgress("Svuotamento database","Eliminazione di tutti gli ordini…",30);const{error}=await db.from("ordini").delete().gt("id",0);if(error)throw error;const{data,error:checkError}=await db.from("ordini").select("id");if(checkError)throw checkError;if(data?.length)throw new Error("Il database non risulta vuoto dopo la cancellazione.");await db.from("meta").upsert({id:1,ultima_importazione:new Date().toISOString()});setProgress("Database svuotato","Verifica completata",100);await Promise.all([loadOrders(),loadMeta()]);toast("Database svuotato e verificato.");setTimeout(hideProgress,700);}catch(error){hideProgress();addLog(errorText(error),"error");toast(errorText(error),"error");}}
+
+function openManualModal(){
+  showModal({title:"Aggiungi ordine manuale",body:`<p class="subtle">Inserisci un ordine con gli stessi campi operativi del CSV.</p><div class="modal-form"><div class="edit-grid"><div class="field"><label for="mNumber">Numero ordine</label><input id="mNumber" inputmode="numeric" placeholder="Es. 4500"></div><div class="field"><label for="mDate">Data ordine</label><input id="mDate" type="date" value="${isoDate(new Date())}"></div><div class="field full"><label for="mClient">Cliente</label><input id="mClient" placeholder="Nome cliente"></div><div class="field"><label for="mGraphic">Grafico</label><select id="mGraphic"><option value="">Da smistare</option><option>ALBERTO</option><option>PIETRO</option><option>SAMUELE</option><option value="COMPLETATO">Salvo G. · completato</option></select></div><div class="field"><label for="mSector">Settore</label><select id="mSector"><option>PLOTTER</option><option>INSEGNE</option><option>FURGONE</option></select></div><div class="field full"><label for="mDescription">Descrizione breve</label><input id="mDescription" placeholder="Visibile sotto il cliente"></div><div class="field full"><label for="mNotes">Note interne</label><textarea id="mNotes"></textarea></div></div></div>`,actions:[{label:"Aggiungi ordine",className:"btn-primary",onClick:saveManualOrder},{label:"Annulla",className:"btn",onClick:()=>{}}]});
+}
+async function saveManualOrder(){
+  const number=$("mNumber").value.trim(),date=$("mDate").value,client=$("mClient").value.trim();if(!/^\d+$/.test(number)){toast("Il numero ordine deve contenere solo cifre.","warning");return;}if(!date||!client){toast("Data ordine e cliente sono obbligatori.","warning");return;}
+  const record={numero_ordine:number,anno_ordine:Number(date.slice(0,4)),data_ordine:date,cliente:client,grafico:$("mGraphic").value,stato:"Confermato",settore:$("mSector").value,descrizione_breve:$("mDescription").value.trim(),note_interne:$("mNotes").value,data_evasione_grafica:null,inserito_manuale:true};
+  try{requireDb();const{data,error}=await db.from("ordini").insert(record).select("id");if(error)throw error;if(!data?.length)throw new Error("Inserimento non confermato dal database.");toast("Ordine manuale aggiunto.");await loadOrders();}catch(error){addLog(errorText(error),"error");toast(errorText(error),"error");}
+}
+function showModal({title,body,actions}){
+  lastFocused=document.activeElement;$("modalTitle").textContent=title;$("modalBody").innerHTML=body;const wrap=$("modalActions");wrap.innerHTML="";
+  actions.forEach(action=>{const button=document.createElement("button");button.className=`btn ${action.className||""}`;button.textContent=action.label;button.addEventListener("click",async()=>{closeModal();await action.onClick?.();});wrap.appendChild(button);});
+  $("modalBg").classList.add("active");document.body.style.overflow="hidden";setTimeout(()=>($("modalBody").querySelector("input,select,textarea")||wrap.querySelector("button")||$("modalClose")).focus(),20);
+}
+function closeModal(){$("modalBg").classList.remove("active");document.body.style.overflow="";lastFocused?.focus?.();}
+function trapModalFocus(event){
+  if(!$("modalBg").classList.contains("active"))return;if(event.key==="Escape"){event.preventDefault();closeModal();return;}if(event.key!=="Tab")return;
+  const focusable=[...$("modalBg").querySelectorAll("button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled)")];if(!focusable.length)return;const first=focusable[0],last=focusable.at(-1);
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+}
+function bindEvents(){
+  $("csvFile").addEventListener("change",event=>{handleFile(event.target.files[0]);event.target.value="";});
+  const zone=$("dropzone");["dragenter","dragover"].forEach(type=>zone.addEventListener(type,event=>{event.preventDefault();zone.classList.add("dragover");}));["dragleave","drop"].forEach(type=>zone.addEventListener(type,event=>{event.preventDefault();zone.classList.remove("dragover");}));zone.addEventListener("drop",event=>handleFile(event.dataTransfer.files[0]));
+  $("cancelReview").onclick=cancelReview;$("cancelReviewTop").onclick=cancelReview;$("importBtn").onclick=beginImport;
+  document.querySelectorAll("[data-tab]").forEach(button=>button.addEventListener("click",()=>{activeReviewTab=button.dataset.tab;selectedReview.clear();renderReview();}));
+  $("reviewList").addEventListener("click",event=>{const button=event.target.closest("[data-review-action]");if(button)setReview(button.dataset.uid,button.dataset.reviewAction);});
+  $("reviewList").addEventListener("change",event=>{const check=event.target.closest("[data-review-check]");if(!check)return;if(check.checked)selectedReview.add(check.dataset.reviewCheck);else selectedReview.delete(check.dataset.reviewCheck);$("selectAllReview").checked=selectedReview.size===reviewItems("uncertain").length;});
+  $("selectAllReview").addEventListener("change",event=>{selectedReview.clear();if(event.target.checked)reviewItems("uncertain").forEach(item=>selectedReview.add(item.uid));renderReview();});
+  $("approveSelected").onclick=()=>bulkReview("approve");$("rejectSelected").onclick=()=>bulkReview("reject");
+  $("searchInput").addEventListener("input",renderOrders);$("refreshBtn").onclick=()=>Promise.all([loadOrders(),loadMeta()]);$("clearBtn").onclick=confirmClear;$("manualBtn").onclick=openManualModal;
+  $("ordersList").addEventListener("click",event=>{
+    const toggle=event.target.closest("[data-toggle-order]");if(toggle){const row=toggle.closest(".order-row"),expanded=row.classList.toggle("expanded");toggle.setAttribute("aria-expanded",String(expanded));return;}
+    const save=event.target.closest("[data-save-order]");if(save){saveOrder(save.dataset.saveOrder,save.closest(".order-row"));return;}const del=event.target.closest("[data-delete-order]");if(del)confirmDelete(del.dataset.deleteOrder);
+  });
+  $("modalClose").onclick=closeModal;$("modalBg").addEventListener("click",event=>{if(event.target===$("modalBg"))closeModal();});document.addEventListener("keydown",trapModalFocus);
+}
+function init(){
+  bindEvents();addLog("Applicazione avviata");addLog(`Regole attive: anno ${currentYear}; completati precedenti dal 1 ottobre ${currentYear-1}`);
+  if(!window.supabase?.createClient){setConnection(false,"Libreria assente");addLog("Libreria Supabase non caricata. Controlla la connessione Internet.","error");$("lastUpdate").textContent="Database non disponibile";$("ordersList").innerHTML='<div class="empty"><i class="bi bi-cloud-slash"></i><h3>Connessione assente</h3><p>Ricarica la pagina quando sei online.</p></div>';return;}
+  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);loadOrders();loadMeta();setInterval(loadMeta,60000);
+}
+init();
+</script>
+</body>
+</html>
