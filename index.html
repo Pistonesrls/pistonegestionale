@@ -4,200 +4,439 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Dashboard Ordini Grafica</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f8f9fa;
+    --bg-muted: #f1f3f5;
+    --border: #e5e7eb;
+    --border-strong: #d1d5db;
+    --text: #111827;
+    --text-muted: #6b7280;
+    --text-faint: #9ca3af;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-soft: #eff6ff;
+    --success: #059669;
+    --success-soft: #ecfdf5;
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+    --warning: #d97706;
+    --warning-soft: #fffbeb;
+    --purple: #7c3aed;
+    --cyan: #0891b2;
+    --green: #059669;
+    --slate: #475569;
+    --amber: #d97706;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #0f172a;
-    color: #e2e8f0;
-    padding: 12px;
-    padding-bottom: 100px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 16px;
+    padding-bottom: 80px;
     font-size: 14px;
+    line-height: 1.5;
     transition: background 0.3s;
   }
-  body.stale { background: #7f1d1d; }
-  body.stale .container { background: #991b1b; }
-  body.stale header { background: #991b1b; }
-  body.stale .order-card { background: #991b1b; border-color: #fecaca; }
+
+  body.stale { background: var(--danger-soft); }
   body.stale .stale-banner { display: block; }
+  body.stale .card { border-color: var(--danger); }
+
+  .container { max-width: 860px; margin: 0 auto; }
 
   .stale-banner {
     display: none;
-    background: #dc2626;
+    background: var(--danger);
     color: white;
-    padding: 12px;
-    border-radius: 8px;
-    text-align: center;
-    font-weight: bold;
-    margin-bottom: 12px;
-    font-size: 13px;
-  }
-
-  .container { max-width: 800px; margin: 0 auto; }
-
-  header {
-    background: #1e293b;
-    padding: 16px;
-    border-radius: 12px;
-    margin-bottom: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  }
-  header h1 { font-size: 18px; margin-bottom: 12px; }
-  header .info { font-size: 11px; opacity: 0.7; margin-bottom: 12px; }
-
-  .controls { display: flex; flex-direction: column; gap: 8px; }
-  .controls-row { display: flex; gap: 8px; flex-wrap: wrap; }
-
-  button, input[type="file"] {
-    padding: 10px 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    flex: 1;
-    min-width: 0;
-  }
-  button.primary { background: #3b82f6; color: white; }
-  button.primary:active { background: #2563eb; }
-  button.danger { background: #ef4444; color: white; }
-  button.danger:active { background: #dc2626; }
-  button.secondary { background: #475569; color: white; }
-  button.secondary:active { background: #334155; }
-
-  input[type="file"] {
-    background: #475569;
-    color: white;
-    padding: 10px;
-    font-size: 12px;
-  }
-
-  .stats {
-    background: #1e293b;
-    padding: 12px;
+    padding: 14px;
     border-radius: 10px;
-    margin-bottom: 12px;
-    font-size: 12px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .stale-banner small { display: block; font-weight: 400; opacity: 0.9; margin-top: 4px; }
+
+  /* Header */
+  .header {
     display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
     gap: 8px;
   }
-  .stat-item { text-align: center; }
-  .stat-value { font-size: 20px; font-weight: bold; color: #60a5fa; }
-  .stat-label { font-size: 10px; opacity: 0.7; text-transform: uppercase; }
-
-  .order-card {
-    background: #1e293b;
-    border-radius: 10px;
-    padding: 14px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    border-left: 4px solid #3b82f6;
+  .header .last-update {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
   }
-  .order-card.no-evade { border-left-color: #f59e0b; }
-  .order-card.top-priority { border-left-color: #10b981; }
 
-  .order-header {
+  /* Dropzone */
+  .dropzone {
+    border: 2px dashed var(--border-strong);
+    border-radius: 12px;
+    padding: 28px;
+    text-align: center;
+    background: var(--bg-soft);
+    transition: all 0.2s;
+    cursor: pointer;
+    margin-bottom: 16px;
+  }
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .dropzone i {
+    font-size: 32px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .dropzone.dragover i { color: var(--accent); }
+  .dropzone .label {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .dropzone .sublabel {
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-top: 4px;
+  }
+
+  /* Preview Report */
+  .preview {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .preview.active { display: block; }
+  .preview h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .preview-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .preview-stat {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+  .preview-stat .num {
+    font-size: 22px;
+    font-weight: 700;
+    display: block;
+  }
+  .preview-stat .num.valid { color: var(--success); }
+  .preview-stat .num.skip { color: var(--text-muted); }
+  .preview-stat .num.total { color: var(--text); }
+  .preview-stat .label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+  .preview-reasons {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+    max-height: 120px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+  }
+  .preview-reasons .reason {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--bg-muted);
+  }
+  .preview-reasons .reason:last-child { border-bottom: none; }
+  .preview-reasons .reason-count {
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .preview-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* Buttons */
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover:not(:disabled) { background: #047857; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover:not(:disabled) { background: #b91c1c; }
+  .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn-ghost:hover:not(:disabled) { background: var(--bg-muted); }
+  .btn-soft { background: var(--bg-muted); color: var(--text); }
+  .btn-soft:hover:not(:disabled) { background: var(--border); }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 180px;
+    position: relative;
+  }
+  .search-box i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-faint);
+  }
+  .search-box input {
+    width: 100%;
+    padding: 9px 12px 9px 34px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .search-box input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* Stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 640px) {
+    .stats-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .stat-card {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .stat-card .num {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    display: block;
+  }
+  .stat-card .label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+    display: block;
+  }
+  .stat-card.highlight .num { color: var(--warning); }
+
+  /* Orders List */
+  .orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Order Card */
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .card.no-evade { border-left: 3px solid var(--warning); }
+  .card.overdue { border-left: 3px solid var(--danger); background: var(--danger-soft); }
+
+  .card-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 6px;
-    gap: 8px;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .card-title {
+    flex: 1;
+    min-width: 0;
   }
   .order-num {
-    font-weight: bold;
-    font-size: 15px;
-    color: #f1f5f9;
-  }
-  .badge {
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: bold;
-    white-space: nowrap;
-  }
-  .badge-alberto { background: #8b5cf6; color: white; }
-  .badge-pietro { background: #06b6d4; color: white; }
-  .badge-samuele { background: #10b981; color: white; }
-  .badge-salvog { background: #64748b; color: white; }
-  .badge-smistare { background: #f59e0b; color: #0f172a; }
-  .badge-completato { background: #475569; color: white; }
-
-  .cliente {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    color: #f1f5f9;
-    margin-bottom: 2px;
-  }
-  .descrizione {
-    font-size: 11px;
-    opacity: 0.6;
-    margin-bottom: 8px;
-    font-style: italic;
-  }
-  .settore-tag {
-    display: inline-block;
-    background: #334155;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    margin-right: 4px;
-    margin-bottom: 4px;
-  }
-  .settore-tag.highlight { background: #f59e0b; color: #0f172a; font-weight: bold; }
-
-  .order-fields {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .field-row {
+    color: var(--text);
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+  .order-num .icon { color: var(--text-muted); }
+  .order-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .cliente {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 4px 0 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .descrizione {
     font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .descrizione.placeholder { opacity: 0.5; }
+
+  /* Badge grafico */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge-alberto { background: #f3e8ff; color: var(--purple); }
+  .badge-pietro { background: #e0f2fe; color: var(--cyan); }
+  .badge-samuele { background: #d1fae5; color: var(--green); }
+  .badge-salvog { background: var(--bg-muted); color: var(--slate); }
+  .badge-smistare { background: #fef3c7; color: var(--amber); }
+
+  /* Fields */
+  .fields {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .field {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 8px;
+    align-items: flex-start;
   }
   .field-label {
-    min-width: 85px;
-    opacity: 0.7;
     font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding-top: 7px;
   }
-  .field-input {
-    flex: 1;
-    padding: 6px 8px;
-    background: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 6px;
-    color: #e2e8f0;
-    font-size: 12px;
-    min-width: 0;
-  }
-  .field-input:focus { outline: none; border-color: #3b82f6; }
-  input[type="datetime-local"] { font-size: 11px; }
-  textarea.field-input { resize: vertical; min-height: 40px; }
-
-  .save-btn {
-    margin-top: 8px;
+  .field input, .field textarea {
     width: 100%;
-    padding: 8px;
-    background: #10b981;
-    color: white;
-    border: none;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
     border-radius: 6px;
-    font-size: 12px;
-    font-weight: bold;
-    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color 0.15s;
   }
-  .save-btn:active { background: #059669; }
+  .field input:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .field textarea { resize: vertical; min-height: 36px; }
 
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .card-actions button { flex: 1; padding: 8px; font-size: 12px; }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    background: var(--bg-muted);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .tag.highlight { background: #fef3c7; color: var(--warning); font-weight: 600; }
+
+  /* Modal */
   .modal-overlay {
     display: none;
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
     z-index: 1000;
     padding: 20px;
     align-items: center;
@@ -205,126 +444,219 @@
   }
   .modal-overlay.active { display: flex; }
   .modal {
-    background: #1e293b;
-    border-radius: 12px;
-    padding: 20px;
-    max-width: 400px;
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    max-width: 440px;
     width: 100%;
+    border: 1px solid var(--border);
   }
-  .modal h3 { margin-bottom: 12px; font-size: 16px; }
-  .modal p { margin-bottom: 16px; font-size: 13px; line-height: 1.5; }
-  .modal-buttons { display: flex; gap: 8px; flex-direction: column; }
-  .modal-buttons button { flex: none; }
-
-  .filter-toggle {
+  .modal h3 {
+    font-size: 16px;
+    font-weight: 700;
     margin-bottom: 10px;
-    padding: 8px 12px;
-    background: #1e293b;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-  }
-  .filter-toggle label {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 12px;
-    cursor: pointer;
   }
-  .filter-toggle input { width: 18px; height: 18px; }
-
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    opacity: 0.6;
+  .modal p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 18px;
   }
+  .modal-actions { display: flex; flex-direction: column; gap: 8px; }
+  .modal-actions button { padding: 11px; }
 
-  .toast {
+  /* Toast */
+  .toast-container {
     position: fixed;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: #10b981;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-weight: bold;
     z-index: 2000;
-    display: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
   }
-  .toast.error { background: #ef4444; }
-  .toast.active { display: block; animation: slideUp 0.3s; }
+  .toast {
+    background: var(--text);
+    color: white;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideUp 0.25s;
+    pointer-events: auto;
+    max-width: 90vw;
+  }
+  .toast.success { background: var(--success); }
+  .toast.error { background: var(--danger); }
+  .toast.warning { background: var(--warning); }
   @keyframes slideUp {
-    from { transform: translate(-50%, 100%); opacity: 0; }
-    to { transform: translate(-50%, 0); opacity: 1; }
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 
-  .loader {
+  /* Loader */
+  .spinner {
     display: inline-block;
     width: 14px;
     height: 14px;
     border: 2px solid rgba(255,255,255,0.3);
     border-top-color: white;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-left: 6px;
-    vertical-align: middle;
+    animation: spin 0.7s linear infinite;
+  }
+  .spinner.dark {
+    border-color: rgba(0,0,0,0.15);
+    border-top-color: var(--text);
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-muted);
+  }
+  .empty i { font-size: 40px; margin-bottom: 12px; display: block; opacity: 0.4; }
+  .empty .title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .empty .sub { font-size: 12px; }
+
+  /* Skeleton */
+  .skeleton-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .skeleton-line {
+    height: 12px;
+    background: var(--bg-muted);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .skeleton-line.short { width: 40%; }
+  .skeleton-line.med { width: 70%; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Header buttons */
+  .header-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .icon-btn:hover { background: var(--bg-muted); }
+  .icon-btn.danger { color: var(--danger); }
+  .icon-btn.danger:hover { background: var(--danger-soft); }
+
+  input[type="datetime-local"] { font-size: 12px; }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 24px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <div class="stale-banner" id="staleBanner">⚠️ ATTENZIONE: DATI NON AGGIORNATI<br><small>Ultimo caricamento oltre 24h fa</small></div>
-
-  <header>
-    <h1>📋 Dashboard Ordini Grafica</h1>
-    <div class="info" id="lastUpdate">Ultimo aggiornamento: caricamento...</div>
-
-    <div class="controls">
-      <input type="file" id="csvFile" accept=".csv">
-      <div class="controls-row">
-        <button class="primary" onclick="document.getElementById('csvFile').click()">📥 Carica CSV</button>
-        <button class="secondary" onclick="loadOrders()">🔄 Aggiorna</button>
-      </div>
-      <button class="danger" onclick="confirmClear()">🗑️ Svuota Database</button>
-    </div>
-  </header>
-
-  <div class="filter-toggle">
-    <label>
-      <input type="checkbox" id="filterPlotter" checked onchange="renderOrders()">
-      Mostra PLOTTER
-    </label>
-    <label>
-      <input type="checkbox" id="filterInsegne" checked onchange="renderOrders()">
-      Mostra INSEGNE
-    </label>
-    <label>
-      <input type="checkbox" id="filterFurgone" checked onchange="renderOrders()">
-      Mostra FURGONE
-    </label>
+  <div class="stale-banner" id="staleBanner">
+    <i class="bi bi-exclamation-triangle-fill"></i> ATTENZIONE: DATI NON AGGIORNATI
+    <small>Ultimo caricamento oltre 24h fa</small>
   </div>
 
-  <div class="stats" id="stats"></div>
+  <div class="header">
+    <div>
+      <h1><i class="bi bi-list-check"></i> Ordini Grafica</h1>
+      <div class="last-update" id="lastUpdate">Caricamento...</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="loadOrders()" title="Aggiorna"><i class="bi bi-arrow-clockwise"></i></button>
+      <button class="icon-btn danger" onclick="confirmClear()" title="Svuota database"><i class="bi bi-trash"></i></button>
+    </div>
+  </div>
 
-  <div id="ordersList"></div>
+  <!-- Dropzone -->
+  <div class="dropzone" id="dropzone">
+    <i class="bi bi-cloud-upload"></i>
+    <div class="label">Trascina qui il CSV di Danea</div>
+    <div class="sublabel">oppure clicca per selezionare il file</div>
+    <input type="file" id="csvFile" accept=".csv" style="display:none">
+  </div>
+
+  <!-- Preview -->
+  <div class="preview" id="preview">
+    <h3><i class="bi bi-clipboard-data"></i> Anteprima filtraggio</h3>
+    <div class="preview-stats" id="previewStats"></div>
+    <div class="preview-reasons" id="previewReasons"></div>
+    <div class="preview-actions">
+      <button class="btn-ghost" onclick="cancelPreview()">
+        <i class="bi bi-x-lg"></i> Annulla
+      </button>
+      <button class="btn-success" id="importBtn" onclick="doImport()">
+        <i class="bi bi-cloud-arrow-up"></i> Importa nel database
+      </button>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="text" id="searchInput" placeholder="Cerca cliente, numero ordine...">
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" id="stats"></div>
+
+  <!-- Orders -->
+  <div class="section-title">
+    <i class="bi bi-inbox"></i>
+    <span>Lavori in carico</span>
+    <span id="ordersCount" style="margin-left:auto; color:var(--text-faint);"></span>
+  </div>
+  <div class="orders-list" id="ordersList"></div>
 </div>
 
-<!-- Modal conferme -->
+<!-- Modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <h3 id="modalTitle"></h3>
     <p id="modalText"></p>
-    <div class="modal-buttons" id="modalButtons"></div>
+    <div class="modal-actions" id="modalButtons"></div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast-container" id="toastContainer"></div>
 
 <script>
 const SUPABASE_URL = 'https://emaiswhuznyqkzzzelvh.supabase.co';
@@ -332,312 +664,433 @@ const SUPABASE_KEY = 'sb_publishable_7xF7dZXBDOahRmdanK-cFw_jx0sO0Cw';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let allOrders = [];
+let pendingImport = null;
 const currentYear = new Date().getFullYear();
 
 // ============ UTILS ============
-function showToast(msg, isError = false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast active' + (isError ? ' error' : '');
-  setTimeout(() => t.classList.remove('active'), 3000);
+function toast(msg, type = 'info', duration = 3000) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = { success: 'check-circle-fill', error: 'exclamation-circle-fill', warning: 'exclamation-triangle-fill', info: 'info-circle-fill' };
+  t.innerHTML = `<i class="bi bi-${icons[type] || 'info-circle-fill'}"></i> ${msg}`;
+  c.appendChild(t);
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateY(20px)';
+    setTimeout(() => t.remove(), 250);
+  }, duration);
 }
 
 function showModal(title, text, buttons) {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalText').textContent = text;
+  document.getElementById('modalTitle').innerHTML = title;
+  document.getElementById('modalText').innerHTML = text;
   const btns = document.getElementById('modalButtons');
   btns.innerHTML = '';
   buttons.forEach(b => {
     const btn = document.createElement('button');
-    btn.textContent = b.label;
-    btn.className = b.class || 'secondary';
-    btn.onclick = () => {
-      closeModal();
-      b.action();
-    };
+    btn.innerHTML = b.label;
+    btn.className = b.class || 'btn-ghost';
+    btn.onclick = () => { closeModal(); if (b.action) b.action(); };
     btns.appendChild(btn);
   });
   document.getElementById('modal').classList.add('active');
 }
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
-function closeModal() {
-  document.getElementById('modal').classList.remove('active');
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// ============ PARSING CSV ============
+// ============ CSV PARSER ROBUSTO ============
 function parseCSV(text) {
   const rows = [];
-  let currentRow = [];
-  let currentField = '';
+  let row = [];
+  let field = '';
   let inQuotes = false;
-
+  
+  // Normalizza line endings
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
     if (c === '"') {
-      if (inQuotes && text[i+1] === '"') {
-        currentField += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
+      if (inQuotes && text[i+1] === '"') { field += '"'; i++; }
+      else inQuotes = !inQuotes;
     } else if (c === ',' && !inQuotes) {
-      currentRow.push(currentField);
-      currentField = '';
-    } else if ((c === '\n' || c === '\r') && !inQuotes) {
-      if (c === '\r' && text[i+1] === '\n') i++;
-      if (currentField || currentRow.length > 0) {
-        currentRow.push(currentField);
-        rows.push(currentRow);
-        currentRow = [];
-        currentField = '';
-      }
+      row.push(field);
+      field = '';
+    } else if (c === '\n' && !inQuotes) {
+      row.push(field);
+      if (row.some(f => f.trim())) rows.push(row);
+      row = [];
+      field = '';
     } else {
-      currentField += c;
+      field += c;
     }
   }
-  if (currentField || currentRow.length > 0) {
-    currentRow.push(currentField);
-    rows.push(currentRow);
+  if (field || row.length) {
+    row.push(field);
+    if (row.some(f => f.trim())) rows.push(row);
   }
-
-  // Rimuovi righe vuote o di solo separatori
-  return rows.filter(r => r.some(f => f && f.trim()));
+  return rows;
 }
 
-function parseItalianDate(str) {
-  if (!str) return null;
-  const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+function parseItalianDate(s) {
+  if (!s) return null;
+  s = s.trim();
+  const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
   if (!m) return null;
-  let year = parseInt(m[3]);
-  if (year < 100) year += 2000;
-  return new Date(year, parseInt(m[2]) - 1, parseInt(m[1]));
+  let y = parseInt(m[3]);
+  if (y < 100) y += 2000;
+  return new Date(y, parseInt(m[2])-1, parseInt(m[1]));
 }
 
 // ============ FILTRI ============
-function shouldIncludeOrder(row) {
-  // Colonne: 1=data, 2=operatore, 3=numero, 4=stato, 5=grafico, 6=data evasione, 7=cliente, 8=note, 9=prezzo, 10=settore
-  // Nel CSV reale: index 1=data ordine, 2=operatore, 3=numero, 4=stato, 5=grafico, 6=data evasione, 7=cliente, 8=note, 10=settore
-  if (row.length < 9) return false;
+function classifyRow(row) {
+  // Colonne reali: 1=data, 2=operatore, 3=numero, 4=stato, 5=grafico, 6=data evasione, 7=cliente, 8=note, 9=prezzo, 10=settore
+  if (row.length < 11) return { valid: false, reason: 'Riga incompleta' };
 
   const dataOrdineStr = (row[1] || '').trim();
-  const numeroOrdine = (row[3] || '').trim();
+  const numero = (row[3] || '').trim();
   const stato = (row[4] || '').trim();
-  const grafico = (row[5] || '').trim().toUpperCase();
-  const settore = (row[10] || (row[9] || '')).trim().toUpperCase();
+  const grafico = (row[5] || '').trim();
+  const dataEvasioneStr = (row[6] || '').trim();
+  const cliente = (row[7] || '').trim();
+  const note = (row[8] || '').trim();
+  const settore = (row[10] || '').trim();
 
   const dataOrdine = parseItalianDate(dataOrdineStr);
-  if (!dataOrdine) return false;
+  if (!dataOrdine) return { valid: false, reason: 'Data ordine non valida' };
+
+  const statoLower = stato.toLowerCase();
+  const graficoUpper = grafico.toUpperCase().replace(/\s+/g, ' ').trim();
+  const noteUpper = note.toUpperCase();
 
   // 1. Escludi Annullati
-  if (stato.toLowerCase().includes('annullato')) return false;
+  if (statoLower.includes('annullato')) return { valid: false, reason: 'Annullato' };
 
   // 2. Solo Da confermare o Confermato
-  const statoLower = stato.toLowerCase();
-  if (!statoLower.includes('da confermare') && !statoLower.includes('confermato')) return false;
+  if (!statoLower.includes('da confermare') && !statoLower.includes('confermato')) {
+    return { valid: false, reason: `Stato: ${stato || 'n/d'}` };
+  }
 
-  // 3. Escludi SOSPESO
-  if (statoLower.includes('sospeso') || grafico === 'SOSPESO' || (row[6] || '').toUpperCase().includes('SOSPESO')) return false;
-  // Controllo anche note
-  if ((row[8] || '').toUpperCase().includes('SOSPESO')) return false;
+  // 3. Escludi SOSPESO (in qualsiasi campo rilevante)
+  if (graficoUpper === 'SOSPESO' || 
+      statoLower.includes('sospeso') || 
+      noteUpper.includes('SOSPESO') ||
+      dataEvasioneStr.toUpperCase().includes('SOSPESO')) {
+    return { valid: false, reason: 'Sospeso' };
+  }
 
   // 4. Escludi /B
-  if (numeroOrdine.toUpperCase().includes('/B')) return false;
+  if (numero.toUpperCase().includes('/B')) return { valid: false, reason: 'Numero /B' };
 
-  // 5. Grafico valido
-  const graficoClean = grafico.replace(/\s+/g, ' ').trim();
-  const graficiValidi = ['ALBERTO', 'ALBERTO - COMPLETATO', 'PIETRO', 'PIETRO - COMPLETATO', 'COMPLETATO', 'SAMUELE', 'SAMUELE - COMPLETATO'];
-  if (graficoClean && !graficiValidi.includes(graficoClean)) {
-    return false;
+  // 5. Escludi SALVO G. - COMPLETATO e FABRIS / FABRIS - COMPLETATO
+  if (graficoUpper.includes('SALVO G.') || graficoUpper.includes('FABRIS')) {
+    return { valid: false, reason: `Grafico: ${grafico}` };
   }
 
-  // 6. Escludi SALVO G. - COMPLETATO e FABRIS / FABRIS - COMPLETATO
-  if (graficoClean.includes('SALVO G.') || graficoClean.includes('FABRIS')) return false;
+  // 6. Grafico valido (o vuoto = da smistare)
+  const graficiValidi = ['ALBERTO', 'ALBERTO - COMPLETATO', 'PIETRO', 'PIETRO - COMPLETATO', 
+                          'COMPLETATO', 'SAMUELE', 'SAMUELE - COMPLETATO'];
+  if (graficoUpper && !graficiValidi.includes(graficoUpper)) {
+    return { valid: false, reason: `Grafico non valido: ${grafico}` };
+  }
 
-  // 7. Filtro anno (precedente, attuale, successivo)
+  // 7. Filtro anno
   const year = dataOrdine.getFullYear();
-  if (year < currentYear - 1 || year > currentYear + 1) return false;
+  if (year < currentYear - 1 || year > currentYear + 1) {
+    return { valid: false, reason: `Anno ${year}` };
+  }
 
-  return true;
+  return {
+    valid: true,
+    data: {
+      numero_ordine: numero,
+      anno_ordine: year,
+      cliente: cliente,
+      data_ordine: dataOrdine.toISOString().split('T')[0],
+      grafico: grafico,
+      stato: stato,
+      settore: settore
+    }
+  };
 }
 
-function getDisplayGrafico(grafico) {
-  const g = (grafico || '').toUpperCase().trim();
-  if (!g) return { name: 'Da smistare', class: 'badge-smistare' };
-  if (g === 'COMPLETATO') return { name: 'Salvo G.', class: 'badge-salvog' };
-  if (g.includes('ALBERTO')) return { name: 'Alberto', class: 'badge-alberto' };
-  if (g.includes('PIETRO')) return { name: 'Pietro', class: 'badge-pietro' };
-  if (g.includes('SAMUELE')) return { name: 'Samuele', class: 'badge-samuele' };
-  return { name: g, class: 'badge-completato' };
-}
-
-// ============ CARICAMENTO CSV ============
-document.getElementById('csvFile').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const text = await file.text();
+// ============ PRE-FILTRAGGIO LOCALE ============
+function processCSVLocally(text) {
   const rows = parseCSV(text);
-  const filtered = rows.filter(shouldIncludeOrder).map(row => ({
-    numero_ordine: row[3].trim(),
-    data_ordine_str: row[1].trim(),
-    data_ordine: parseItalianDate(row[1].trim()),
-    cliente: (row[7] || '').trim(),
-    grafico: (row[5] || '').trim(),
-    stato: (row[4] || '').trim(),
-    settore: (row[10] || row[9] || '').trim(),
-    note_csv: (row[8] || '').trim()
-  }));
+  const valid = [];
+  const reasons = {};
+  let totalRows = 0;
 
-  if (filtered.length === 0) {
-    showToast('Nessun ordine valido trovato nel CSV', true);
-    return;
-  }
-
-  // Controlla conflitti
-  const { data: existing } = await supabase.from('ordini').select('numero_ordine, anno_ordine, note_interne, descrizione_breve, data_evasione_grafica');
-  const existingMap = {};
-  (existing || []).forEach(o => {
-    existingMap[`${o.numero_ordine}_${o.anno_ordine}`] = o;
+  rows.forEach(row => {
+    // Salta header se presente (contiene "Data", "Numero", etc.)
+    if (row[1] && /data/i.test(row[1]) && /numero/i.test(row[3] || '')) return;
+    
+    totalRows++;
+    const result = classifyRow(row);
+    if (result.valid) {
+      valid.push(result.data);
+    } else {
+      reasons[result.reason] = (reasons[result.reason] || 0) + 1;
+    }
   });
 
-  const hasCustomData = filtered.some(o => {
-    const key = `${o.numero_ordine}_${o.data_ordine.getFullYear()}`;
-    const ex = existingMap[key];
-    return ex && (ex.note_interne || ex.descrizione_breve || ex.data_evasione_grafica);
+  // Deduplica per numero+anno, tieni anno corrente se duplicati
+  const unique = new Map();
+  valid.forEach(o => {
+    const key = `${o.numero_ordine}_${o.anno_ordine}`;
+    if (!unique.has(key) || o.anno_ordine === currentYear) {
+      unique.set(key, o);
+    }
   });
 
-  if (hasCustomData) {
-    showModal(
-      '⚠️ Dati esistenti',
-      'Alcuni ordini hanno note, descrizioni o date evasione inserite manualmente. Come vuoi procedere?',
-      [
-        { label: '✅ Mantieni dati esistenti (non sovrascrivere)', class: 'secondary', action: () => importOrders(filtered, false) },
-        { label: '🔄 Sovrascrivi tutto (perderai note/descrizioni)', class: 'danger', action: () => importOrders(filtered, true) },
-        { label: '❌ Annulla', class: 'secondary', action: () => {} }
-      ]
-    );
-  } else {
-    importOrders(filtered, true);
-  }
+  return {
+    total: totalRows,
+    valid: Array.from(unique.values()),
+    validCount: unique.size,
+    skipCount: totalRows - valid.length,
+    reasons
+  };
+}
+
+// ============ DRAG & DROP ============
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('csvFile');
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+  e.target.value = '';
 });
 
-async function importOrders(orders, overwrite) {
-  showToast('Caricamento in corso...');
-
-  // Raggruppa per numero+anno, mantieni solo anno corrente se duplicati
-  const grouped = {};
-  orders.forEach(o => {
-    const year = o.data_ordine.getFullYear();
-    const key = o.numero_ordine;
-    if (!grouped[key] || year === currentYear) {
-      grouped[key] = o;
-    }
-  });
-  const uniqueOrders = Object.values(grouped);
-
+async function handleFile(file) {
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    toast('Seleziona un file CSV', 'error');
+    return;
+  }
+  
+  dropzone.innerHTML = '<span class="spinner dark"></span> Analisi in corso...';
+  
   try {
-    // Se sovrascrivi, cancella prima
-    if (overwrite) {
-      const nums = uniqueOrders.map(o => o.numero_ordine);
-      await supabase.from('ordini').delete().in('numero_ordine', nums);
-    }
-
-    // Inserisci uno per uno (per gestire UNIQUE constraint)
-    let inserted = 0;
-    let skipped = 0;
-    for (const o of uniqueOrders) {
-      const record = {
-        numero_ordine: o.numero_ordine,
-        anno_ordine: o.data_ordine.getFullYear(),
-        cliente: o.cliente,
-        data_ordine: o.data_ordine.toISOString().split('T')[0],
-        grafico: o.grafico,
-        stato: o.stato,
-        settore: o.settore
-      };
-
-      const { error } = await supabase.from('ordini').insert(record);
-      if (error) {
-        if (error.code === '23505') { // duplicate
-          skipped++;
-        } else {
-          console.error(error);
-        }
-      } else {
-        inserted++;
-      }
-    }
-
-    // Aggiorna timestamp
-    await supabase.from('meta').update({ ultima_importazione: new Date().toISOString() }).eq('id', 1);
-
-    showToast(`✅ Inseriti: ${inserted} | Saltati: ${skipped}`);
-    loadOrders();
+    const text = await file.text();
+    const result = processCSVLocally(text);
+    
+    pendingImport = result;
+    showPreview(result);
+    dropzone.innerHTML = `
+      <i class="bi bi-cloud-check"></i>
+      <div class="label">File analizzato: ${file.name}</div>
+      <div class="sublabel">${result.validCount} ordini pronti per l'import</div>
+    `;
   } catch (err) {
-    showToast('Errore: ' + err.message, true);
+    toast('Errore lettura file: ' + err.message, 'error');
+    resetDropzone();
+  }
+}
+
+function resetDropzone() {
+  dropzone.innerHTML = `
+    <i class="bi bi-cloud-upload"></i>
+    <div class="label">Trascina qui il CSV di Danea</div>
+    <div class="sublabel">oppure clicca per selezionare il file</div>
+  `;
+}
+
+function showPreview(result) {
+  const preview = document.getElementById('preview');
+  
+  document.getElementById('previewStats').innerHTML = `
+    <div class="preview-stat">
+      <span class="num total">${result.total}</span>
+      <span class="label">Righe lette</span>
+    </div>
+    <div class="preview-stat">
+      <span class="num valid">${result.validCount}</span>
+      <span class="label">Da importare</span>
+    </div>
+    <div class="preview-stat">
+      <span class="num skip">${result.skipCount}</span>
+      <span class="label">Scartati</span>
+    </div>
+  `;
+  
+  const reasonsEl = document.getElementById('previewReasons');
+  const reasons = Object.entries(result.reasons).sort((a,b) => b[1]-a[1]);
+  if (reasons.length === 0) {
+    reasonsEl.innerHTML = '<div class="reason"><span>Nessun ordine scartato 🎉</span></div>';
+  } else {
+    reasonsEl.innerHTML = reasons.map(([reason, count]) => 
+      `<div class="reason"><span>${escapeHtml(reason)}</span><span class="reason-count">${count}</span></div>`
+    ).join('');
+  }
+  
+  preview.classList.add('active');
+}
+
+function cancelPreview() {
+  document.getElementById('preview').classList.remove('active');
+  pendingImport = null;
+  resetDropzone();
+}
+
+async function doImport() {
+  if (!pendingImport) return;
+  
+  const { valid } = pendingImport;
+  if (valid.length === 0) {
+    toast('Nessun ordine valido da importare', 'warning');
+    cancelPreview();
+    return;
+  }
+  
+  // Controlla conflitti
+  const btn = document.getElementById('importBtn');
+  btn.innerHTML = '<span class="spinner"></span> Verifica...';
+  btn.disabled = true;
+  
+  try {
+    const numeri = valid.map(o => o.numero_ordine);
+    const anni = [...new Set(valid.map(o => o.anno_ordine))];
+    
+    // Fetch solo ordini esistenti con quei numeri/anni
+    const { data: existing } = await supabase
+      .from('ordini')
+      .select('numero_ordine, anno_ordine, note_interne, descrizione_breve, data_evasione_grafica')
+      .in('numero_ordine', numeri)
+      .in('anno_ordine', anni);
+    
+    const existingMap = {};
+    (existing || []).forEach(o => {
+      existingMap[`${o.numero_ordine}_${o.anno_ordine}`] = o;
+    });
+    
+    const hasCustomData = valid.some(o => {
+      const ex = existingMap[`${o.numero_ordine}_${o.anno_ordine}`];
+      return ex && (ex.note_interne || ex.descrizione_breve || ex.data_evasione_grafica);
+    });
+    
+    if (hasCustomData) {
+      showModal(
+        '<i class="bi bi-exclamation-triangle"></i> Dati esistenti trovati',
+        'Alcuni ordini hanno note, descrizioni o date evasione inserite manualmente. Come vuoi procedere?',
+        [
+          { label: '<i class="bi bi-shield-check"></i> Mantieni dati esistenti', class: 'btn-ghost', action: () => importToDB(valid, false) },
+          { label: '<i class="bi bi-arrow-repeat"></i> Sovrascrivi tutto', class: 'btn-danger', action: () => importToDB(valid, true) },
+          { label: 'Annulla', class: 'btn-soft', action: cancelPreview }
+        ]
+      );
+    } else {
+      importToDB(valid, true);
+    }
+  } catch (err) {
+    toast('Errore: ' + err.message, 'error');
+    btn.innerHTML = '<i class="bi bi-cloud-arrow-up"></i> Importa nel database';
+    btn.disabled = false;
+  }
+}
+
+async function importToDB(orders, overwrite) {
+  document.getElementById('preview').classList.remove('active');
+  toast(`Importazione di ${orders.length} ordini...`, 'info', 5000);
+  
+  try {
+    if (overwrite) {
+      // Upsert (insert or update) in batch di 100
+      const BATCH = 100;
+      let inserted = 0, updated = 0;
+      
+      for (let i = 0; i < orders.length; i += BATCH) {
+        const batch = orders.slice(i, i + BATCH);
+        const { data, error } = await supabase
+          .from('ordini')
+          .upsert(batch, { onConflict: 'numero_ordine,anno_ordine' })
+          .select();
+        
+        if (error) {
+          console.error('Batch error:', error);
+          toast(`Errore batch ${i/BATCH + 1}: ${error.message}`, 'error');
+        } else {
+          inserted += (data || []).length;
+        }
+      }
+      
+      await supabase.from('meta').update({ ultima_importazione: new Date().toISOString() }).eq('id', 1);
+      toast(`✅ Importati ${inserted} ordini`, 'success');
+    }
+    
+    cancelPreview();
+    await loadOrders();
+  } catch (err) {
+    toast('Errore: ' + err.message, 'error');
   }
 }
 
 // ============ CARICAMENTO ORDINI ============
 async function loadOrders() {
+  const list = document.getElementById('ordersList');
+  list.innerHTML = `
+    <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line med"></div><div class="skeleton-line"></div></div>
+    <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line med"></div><div class="skeleton-line"></div></div>
+    <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line med"></div><div class="skeleton-line"></div></div>
+  `;
+  
   const { data, error } = await supabase
     .from('ordini')
     .select('*')
     .order('data_evasione_grafica', { ascending: true, nullsFirst: true })
     .order('data_ordine', { ascending: false });
-
+  
   if (error) {
-    showToast('Errore caricamento: ' + error.message, true);
+    list.innerHTML = `<div class="empty"><i class="bi bi-exclamation-triangle"></i><div class="title">Errore caricamento</div><div class="sub">${error.message}</div></div>`;
     return;
   }
-
+  
   allOrders = data || [];
   renderOrders();
   await loadMeta();
 }
 
 async function loadMeta() {
-  const { data } = await supabase.from('meta').select('ultima_importazione').eq('id', 1).single();
+  const { data } = await supabase.from('meta').select('ultima_importazione').eq('id', 1).maybeSingle();
+  const el = document.getElementById('lastUpdate');
+  
   if (data && data.ultima_importazione) {
     const date = new Date(data.ultima_importazione);
-    const now = new Date();
-    const diffHours = (now - date) / (1000 * 60 * 60);
-    document.getElementById('lastUpdate').innerHTML =
-      `Ultimo aggiornamento: <strong>${date.toLocaleString('it-IT')}</strong>`;
-
-    if (diffHours > 24) {
-      document.body.classList.add('stale');
-    } else {
-      document.body.classList.remove('stale');
-    }
+    const diff = (Date.now() - date.getTime()) / (1000 * 60 * 60);
+    const formatted = date.toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    el.innerHTML = `<i class="bi bi-clock"></i> Aggiornato ${formatted}`;
+    document.body.classList.toggle('stale', diff > 24);
+  } else {
+    el.innerHTML = '<i class="bi bi-clock"></i> Nessun aggiornamento';
   }
 }
 
 // ============ RENDERING ============
 function renderOrders() {
   const list = document.getElementById('ordersList');
-  const filterP = document.getElementById('filterPlotter').checked;
-  const filterI = document.getElementById('filterInsegne').checked;
-  const filterF = document.getElementById('filterFurgone').checked;
-
-  let visible = allOrders.filter(o => {
-    const s = (o.settore || '').toUpperCase();
-    if (s.includes('PLOTTER') && !filterP) return false;
-    if (s.includes('INSEGNE') && !filterI) return false;
-    if (s.includes('FURGONE') && !filterF) return false;
-    return true;
-  });
-
-  // Ordina: prima quelli senza data evasione, poi per data
-  visible.sort((a, b) => {
-    if (!a.data_evasione_grafica && b.data_evasione_grafica) return -1;
-    if (a.data_evasione_grafica && !b.data_evasione_grafica) return 1;
-    if (a.data_evasione_grafica && b.data_evasione_grafica) {
-      return new Date(a.data_evasione_grafica) - new Date(b.data_evasione_grafica);
-    }
-    return new Date(b.data_ordine) - new Date(a.data_ordine);
-  });
-
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  
+  let visible = allOrders;
+  if (search) {
+    visible = visible.filter(o => 
+      (o.cliente || '').toLowerCase().includes(search) ||
+      (o.numero_ordine || '').toLowerCase().includes(search) ||
+      (o.descrizione_breve || '').toLowerCase().includes(search) ||
+      (o.note_interne || '').toLowerCase().includes(search)
+    );
+  }
+  
   // Stats
   const stats = {
     totale: visible.length,
@@ -645,79 +1098,100 @@ function renderOrders() {
     alberto: visible.filter(o => (o.grafico || '').toUpperCase().includes('ALBERTO')).length,
     pietro: visible.filter(o => (o.grafico || '').toUpperCase().includes('PIETRO')).length,
     samuele: visible.filter(o => (o.grafico || '').toUpperCase().includes('SAMUELE')).length,
-    salvoG: visible.filter(o => (o.grafico || '').toUpperCase() === 'COMPLETATO').length
   };
-
+  
   document.getElementById('stats').innerHTML = `
-    <div class="stat-item"><div class="stat-value">${stats.totale}</div><div class="stat-label">Totale</div></div>
-    <div class="stat-item"><div class="stat-value" style="color:#f59e0b">${stats.daSmistare}</div><div class="stat-label">Da smistare</div></div>
-    <div class="stat-item"><div class="stat-value" style="color:#8b5cf6">${stats.alberto}</div><div class="stat-label">Alberto</div></div>
-    <div class="stat-item"><div class="stat-value" style="color:#06b6d4">${stats.pietro}</div><div class="stat-label">Pietro</div></div>
-    <div class="stat-item"><div class="stat-value" style="color:#10b981">${stats.samuele}</div><div class="stat-label">Samuele</div></div>
-    <div class="stat-item"><div class="stat-value" style="color:#64748b">${stats.salvoG}</div><div class="stat-label">Salvo G.</div></div>
+    <div class="stat-card"><span class="num">${stats.totale}</span><span class="label">Totale</span></div>
+    <div class="stat-card highlight"><span class="num">${stats.daSmistare}</span><span class="label">Da smistare</span></div>
+    <div class="stat-card"><span class="num" style="color:var(--purple)">${stats.alberto}</span><span class="label">Alberto</span></div>
+    <div class="stat-card"><span class="num" style="color:var(--cyan)">${stats.pietro}</span><span class="label">Pietro</span></div>
+    <div class="stat-card"><span class="num" style="color:var(--green)">${stats.samuele}</span><span class="label">Samuele</span></div>
   `;
-
+  
+  document.getElementById('ordersCount').textContent = `${visible.length} ordini`;
+  
   if (visible.length === 0) {
-    list.innerHTML = '<div class="empty-state">📭 Nessun ordine da visualizzare</div>';
-    return;
-  }
-
-  list.innerHTML = visible.map(o => {
-    const g = getDisplayGrafico(o.grafico);
-    const settore = (o.settore || '').toUpperCase();
-    const hasEvasione = !!o.data_evasione_grafica;
-    let priorityClass = '';
-    if (!hasEvasione) priorityClass = 'no-evade';
-    else if (new Date(o.data_evasione_grafica) <= new Date()) priorityClass = 'top-priority';
-
-    const settoriHighlight = ['PLOTTER', 'INSEGNE', 'FURGONE'];
-    const settoreHtml = settore ?
-      `<span class="settore-tag ${settoriHighlight.some(s => settore.includes(s)) ? 'highlight' : ''}">${o.settore}</span>` : '';
-
-    const dataEvasioneVal = o.data_evasione_grafica ?
-      new Date(o.data_evasione_grafica).toISOString().slice(0, 16) : '';
-
-    return `
-      <div class="order-card ${priorityClass}" data-id="${o.id}">
-        <div class="order-header">
-          <div>
-            <div class="order-num">Ordine n. ${o.numero_ordine}</div>
-            <div style="font-size:11px;opacity:0.6;margin-top:2px;">📅 ${new Date(o.data_ordine).toLocaleDateString('it-IT')}</div>
-          </div>
-          <span class="badge ${g.class}">${g.name}</span>
-        </div>
-        <div class="cliente">${o.cliente || 'N/D'}</div>
-        ${o.descrizione_breve ? `<div class="descrizione">${escapeHtml(o.descrizione_breve)}</div>` : `<div class="descrizione" style="opacity:0.4;font-style:italic;">Aggiungi descrizione breve...</div>`}
-        ${settoreHtml}
-
-        <div class="order-fields">
-          <div class="field-row">
-            <span class="field-label">Evasione grafica:</span>
-            <input type="datetime-local" class="field-input" id="evade_${o.id}" value="${dataEvasioneVal}">
-          </div>
-          <div class="field-row" style="align-items:flex-start;">
-            <span class="field-label" style="margin-top:6px;">Descrizione:</span>
-            <textarea class="field-input" id="desc_${o.id}" placeholder="Descrizione breve visibile...">${escapeHtml(o.descrizione_breve || '')}</textarea>
-          </div>
-          <div class="field-row" style="align-items:flex-start;">
-            <span class="field-label" style="margin-top:6px;">Note interne:</span>
-            <textarea class="field-input" id="note_${o.id}" placeholder="Note interne...">${escapeHtml(o.note_interne || '')}</textarea>
-          </div>
-          <button class="save-btn" onclick="saveOrder(${o.id})">💾 Salva modifiche</button>
-        </div>
+    list.innerHTML = `
+      <div class="empty">
+        <i class="bi bi-inbox"></i>
+        <div class="title">${search ? 'Nessun risultato' : 'Nessun ordine'}</div>
+        <div class="sub">${search ? 'Prova una ricerca diversa' : 'Carica un CSV per iniziare'}</div>
       </div>
     `;
-  }).join('');
+    return;
+  }
+  
+  list.innerHTML = visible.map(o => renderCard(o)).join('');
 }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+function getGraficoInfo(grafico) {
+  const g = (grafico || '').toUpperCase().trim();
+  if (!g) return { name: 'Da smistare', class: 'badge-smistare', icon: 'person-plus' };
+  if (g === 'COMPLETATO') return { name: 'Salvo G.', class: 'badge-salvog', icon: 'person-check' };
+  if (g.includes('ALBERTO')) return { name: 'Alberto', class: 'badge-alberto', icon: 'person' };
+  if (g.includes('PIETRO')) return { name: 'Pietro', class: 'badge-pietro', icon: 'person' };
+  if (g.includes('SAMUELE')) return { name: 'Samuele', class: 'badge-samuele', icon: 'person' };
+  return { name: g, class: 'badge-salvog', icon: 'person' };
+}
+
+function renderCard(o) {
+  const g = getGraficoInfo(o.grafico);
+  const settore = (o.settore || '').toUpperCase();
+  const hasEvasione = !!o.data_evasione_grafica;
+  const now = new Date();
+  const isOverdue = hasEvasione && new Date(o.data_evasione_grafica) < now;
+  let stateClass = '';
+  if (!hasEvasione) stateClass = 'no-evade';
+  else if (isOverdue) stateClass = 'overdue';
+  
+  const settoreHighlight = ['PLOTTER', 'INSEGNE', 'FURGONE'].some(s => settore.includes(s));
+  const dataEvasioneVal = o.data_evasione_grafica ? new Date(o.data_evasione_grafica).toISOString().slice(0,16) : '';
+  const dataOrdine = new Date(o.data_ordine).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+  
+  return `
+    <div class="card ${stateClass}" data-id="${o.id}">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="order-num">
+            <i class="bi bi-hash icon"></i>
+            ${escapeHtml(o.numero_ordine)}
+            <span class="tag${settoreHighlight ? ' highlight' : ''}">${escapeHtml(o.settore || '')}</span>
+          </div>
+          <div class="order-date"><i class="bi bi-calendar3"></i> ${dataOrdine}</div>
+          <div class="cliente">${escapeHtml(o.cliente || 'Cliente n/d')}</div>
+          ${o.descrizione_breve 
+            ? `<div class="descrizione">${escapeHtml(o.descrizione_breve)}</div>`
+            : `<div class="descrizione placeholder">Nessuna descrizione</div>`
+          }
+        </div>
+        <span class="badge ${g.class}">
+          <i class="bi bi-${g.icon}"></i>
+          ${g.name}
+        </span>
+      </div>
+      
+      <div class="fields">
+        <div class="field">
+          <label class="field-label"><i class="bi bi-clock-history"></i> Evasione</label>
+          <input type="datetime-local" id="evade_${o.id}" value="${dataEvasioneVal}">
+        </div>
+        <div class="field">
+          <label class="field-label"><i class="bi bi-card-text"></i> Descrizione</label>
+          <textarea id="desc_${o.id}" placeholder="Breve descrizione visibile...">${escapeHtml(o.descrizione_breve || '')}</textarea>
+        </div>
+        <div class="field">
+          <label class="field-label"><i class="bi bi-sticky"></i> Note</label>
+          <textarea id="note_${o.id}" placeholder="Note interne...">${escapeHtml(o.note_interne || '')}</textarea>
+        </div>
+      </div>
+      
+      <div class="card-actions">
+        <button class="btn-primary" onclick="saveOrder(${o.id})">
+          <i class="bi bi-check-lg"></i> Salva
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 // ============ SALVATAGGIO ============
@@ -725,54 +1199,62 @@ async function saveOrder(id) {
   const evasione = document.getElementById(`evade_${id}`).value;
   const desc = document.getElementById(`desc_${id}`).value;
   const note = document.getElementById(`note_${id}`).value;
-
-  const update = {
-    descrizione_breve: desc,
-    note_interne: note,
-    data_evasione_grafica: evasione ? new Date(evasione).toISOString() : null
-  };
-
-  const { error } = await supabase.from('ordini').update(update).eq('id', id);
-  if (error) {
-    showToast('Errore salvataggio: ' + error.message, true);
-  } else {
-    showToast('✅ Salvato');
-    // Aggiorna array locale
+  
+  const btn = event.target.closest('button');
+  const originalHtml = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  
+  try {
+    const update = {
+      descrizione_breve: desc,
+      note_interne: note,
+      data_evasione_grafica: evasione ? new Date(evasione).toISOString() : null
+    };
+    
+    const { error } = await supabase.from('ordini').update(update).eq('id', id);
+    if (error) throw error;
+    
+    // Aggiorna locale
     const ord = allOrders.find(o => o.id === id);
-    if (ord) {
-      ord.descrizione_breve = desc;
-      ord.note_interne = note;
-      ord.data_evasione_grafica = update.data_evasione_grafica;
-    }
+    if (ord) Object.assign(ord, update);
+    
+    toast('Salvato', 'success', 1500);
     renderOrders();
+  } catch (err) {
+    toast('Errore: ' + err.message, 'error');
+  } finally {
+    btn.innerHTML = originalHtml;
+    btn.disabled = false;
   }
 }
 
-// ============ SVUOTA DATABASE ============
+// ============ SVUOTA ============
 function confirmClear() {
   showModal(
-    '🗑️ Conferma svuotamento',
-    'Sei sicuro di voler cancellare TUTTI gli ordini dal database? Questa azione è irreversibile.',
+    '<i class="bi bi-exclamation-triangle"></i> Svuotare il database?',
+    'Tutti gli ordini verranno cancellati. Questa azione è irreversibile.',
     [
-      { label: '⚠️ Sì, svuota tutto', class: 'danger', action: doClear },
-      { label: '❌ Annulla', class: 'secondary', action: () => {} }
+      { label: '<i class="bi bi-trash"></i> Sì, svuota tutto', class: 'btn-danger', action: doClear },
+      { label: 'Annulla', class: 'btn-ghost', action: () => {} }
     ]
   );
 }
 
 async function doClear() {
-  showToast('Svuotamento in corso...');
+  toast('Svuotamento in corso...', 'info');
   const { error } = await supabase.from('ordini').delete().neq('id', -1);
-  if (error) {
-    showToast('Errore: ' + error.message, true);
-    return;
-  }
+  if (error) { toast('Errore: ' + error.message, 'error'); return; }
+  
   await supabase.from('meta').update({ ultima_importazione: new Date().toISOString() }).eq('id', 1);
-  showToast('🗑️ Database svuotato');
+  toast('🗑️ Database svuotato', 'success');
   allOrders = [];
   renderOrders();
   loadMeta();
 }
+
+// ============ SEARCH ============
+document.getElementById('searchInput').addEventListener('input', () => renderOrders());
 
 // ============ INIT ============
 loadOrders();
