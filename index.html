@@ -261,7 +261,8 @@ input[type="file"] { display: none; }
 const SUPABASE_URL = "https://emaiswhuznyqkzzzelvh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_7xF7dZXBDOahRmdanK-cFw_jx0sO0Cw";
 
-let supabase = null;
+// NOME DIVERSO per evitare conflitto con la libreria globale
+let supabaseClient = null;
 let allOrders = [];
 let pendingImport = null;
 let customMap = {};
@@ -317,15 +318,15 @@ function toDatetimeLocalValue(v) {
 
 function initSupabase() {
   try {
+    // window.supabase è la libreria globale caricata dal CDN
     if (!window.supabase) throw new Error("Libreria Supabase non caricata");
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     log("✓ Supabase connesso", "success");
   } catch (e) {
     log("❌ Errore Supabase: " + e.message, "error");
   }
 }
 
-// ============ DATE PARSER ============
 function parseItalianDate(s) {
   if (!s) return null;
   s = String(s).trim();
@@ -342,7 +343,6 @@ function parseItalianDate(s) {
 
 function isItalianDate(s) { return parseItalianDate(s) !== null; }
 
-// ============ CSV PARSER ============
 function parseCsvLine(line) {
   const fields = [];
   let field = "";
@@ -363,7 +363,6 @@ function parseCsvLine(line) {
   return fields;
 }
 
-// ============ FILTRI ============
 function isOnlyDigits(s) { return /^\d+$/.test(String(s).trim()); }
 
 function hasValidSector(settore) {
@@ -401,13 +400,10 @@ function isConfermatoODaConfermare(stato) {
   return s.includes("confermato") || s.includes("confermare");
 }
 
-// ============ LOGICA SITUAZIONI ============
 // MAPPATURA CORRETTA COLONNE:
-// [0] vuoto [1] data [2] operatore commerciale [3] numero [4] stato 
-// [5] GRAFICO [6] data evasione [7] cliente [8] note [9] prezzo [10+] settori/vari
+// [1]data [2]operatore comm. [3]numero [4]stato [5]GRAFICO [6]data ev. [7]cliente [8]note [9]prezzo [10+]settore
 
 function findSettore(fields, startIdx) {
-  // Cerca il settore tra i campi dal index startIdx in poi
   const settoriTarget = ["PLOTTER", "INSEGNE", "FURGONE", "DIGITALE", "DTF", "RICAMO", "SERIGRAFIA", "STAMPA UV", "STAMPA DIRETTA", "SUBLIMAZIONE", "POLIFLEX", "LITOGRAFIA", "TIMBRI"];
   for (let i = startIdx; i < fields.length; i++) {
     const f = (fields[i] || "").toUpperCase();
@@ -421,7 +417,6 @@ function findSettore(fields, startIdx) {
 function classifyOrder(fields) {
   if (fields.length < 10) return { valid: false, reason: "Riga troppo corta" };
 
-  // Trova la prima data italiana valida tra i primi 3 campi
   let dataIdx = -1;
   for (let i = 0; i < Math.min(3, fields.length); i++) {
     if (isItalianDate(fields[i])) { dataIdx = i; break; }
@@ -429,18 +424,12 @@ function classifyOrder(fields) {
   if (dataIdx < 0) return { valid: false, reason: "Data non trovata" };
 
   const offset = dataIdx;
-  // MAPPATURA CORRETTA
   const dataStr = fields[offset] || "";
-  const operatoreComm = (fields[offset + 1] || "").trim(); // operatore commerciale (SALVO G, ENRICA, etc)
   const numero = (fields[offset + 2] || "").trim();
   const stato = (fields[offset + 3] || "").trim();
-  const grafico = (fields[offset + 4] || "").trim(); // <-- QUESTO è il campo grafico vero
-  const dataEvasione = (fields[offset + 5] || "").trim();
+  const grafico = (fields[offset + 4] || "").trim();
   const cliente = (fields[offset + 6] || "").trim();
   const note = (fields[offset + 7] || "").trim();
-  const prezzo = (fields[offset + 8] || "").trim();
-  
-  // Il settore è nei campi successivi (possono essere multipli)
   const settore = findSettore(fields, offset + 9);
 
   const data = parseItalianDate(dataStr);
@@ -450,7 +439,7 @@ function classifyOrder(fields) {
   const numeroUp = numero.toUpperCase();
   const year = data.getFullYear();
 
-  // === REGOLE GLOBALI DI ESCLUSIONE ===
+  // Regole globali
   if (!isStatoValidoGlobale(stato)) {
     return { valid: false, reason: `Stato escluso: ${stato || "n/d"}` };
   }
@@ -458,12 +447,12 @@ function classifyOrder(fields) {
     return { valid: false, reason: "Numero /B" };
   }
 
-  // === CONTROLLO SETTORE ===
+  // Settore obbligatorio
   if (!hasValidSector(settore)) {
     return { valid: false, reason: `Settore non valido: ${settore || "n/d"}` };
   }
 
-  // === SITUAZIONE 1: grafico vuoto ===
+  // Situazione 1: grafico vuoto
   if (!graficoUp) {
     if (isOnlyDigits(numero) && isSoloConfermato(stato)) {
       return buildValid({ numero, year, cliente, data_ordine: data, grafico, stato, settore, note, situation: 1 });
@@ -471,12 +460,12 @@ function classifyOrder(fields) {
     return { valid: false, reason: "Situazione 1 non soddisfatta" };
   }
 
-  // === SITUAZIONE 2: grafici attivi ===
+  // Situazione 2: grafici attivi
   if (graficoUp === "ALBERTO" || graficoUp === "PIETRO" || graficoUp === "SAMUELE") {
     return buildValid({ numero, year, cliente, data_ordine: data, grafico, stato, settore, note, situation: 2 });
   }
 
-  // === SITUAZIONE 3: grafici completati ===
+  // Situazione 3: grafici completati (incluso COMPLETATO = Salvo G.)
   if (graficoUp === "ALBERTO - COMPLETATO" ||
       graficoUp === "PIETRO - COMPLETATO" ||
       graficoUp === "SAMUELE - COMPLETATO" ||
@@ -511,12 +500,11 @@ function buildValid({ numero, year, cliente, data_ordine, grafico, stato, settor
       grafico: grafico,
       stato: stato,
       settore: settore,
-      descrizione_breve: note || "" // Le note del CSV diventano descrizione breve
+      descrizione_breve: note || ""
     }
   };
 }
 
-// ============ PROCESS CSV ============
 function processCSV(text) {
   log("═══ PROCESSAMENTO CSV ═══", "step");
   if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
@@ -528,13 +516,13 @@ function processCSV(text) {
   const reasons = {};
   let skipped = 0;
 
-  lines.forEach((line, idx) => {
+  lines.forEach((line) => {
     const fields = parseCsvLine(line);
     const result = classifyOrder(fields);
     if (result.valid) {
       valid.push(result.data);
       if (valid.length <= 5) {
-        log(`✓ Ordine ${result.data.numero_ordine} (${result.data.cliente}) - Sit. ${result.situation} - Settore: ${result.data.settore}`, "success");
+        log(`✓ Ordine ${result.data.numero_ordine} (${result.data.cliente}) - Sit. ${result.situation} - ${result.data.settore}`, "success");
       }
     } else {
       skipped++;
@@ -560,7 +548,6 @@ function processCSV(text) {
   };
 }
 
-// ============ FILE HANDLING ============
 async function handleFile(file) {
   log(`File: ${file.name} (${file.size} byte)`, "step");
   if (!file.name.toLowerCase().endsWith(".csv")) {
@@ -624,16 +611,15 @@ function cancelPreview() {
   $("csvFile").value = "";
 }
 
-// ============ IMPORT ============
 async function doImport() {
   if (!pendingImport || pendingImport.validCount === 0) return;
-  if (!supabase) { toast("Supabase non disponibile", "error"); return; }
+  if (!supabaseClient) { toast("Supabase non disponibile", "error"); return; }
 
   showLoading("Verifica dati esistenti...", "", 10);
   log("Verifica dati esistenti...", "step");
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from("ordini")
       .select("numero_ordine, anno_ordine, note_interne, descrizione_breve, data_evasione_grafica");
     
@@ -686,8 +672,7 @@ async function runImport(keepCustom) {
     showLoading("Importazione", "Cancellazione ordini dal CSV...", 10);
     log(`Import ${pendingImport.valid.length} ordini (keep=${keepCustom})`, "step");
 
-    // Cancella solo ordini NON manuali
-    const { error: delErr } = await supabase
+    const { error: delErr } = await supabaseClient
       .from("ordini")
       .delete()
       .eq("inserito_manuale", false);
@@ -704,13 +689,12 @@ async function runImport(keepCustom) {
 
     for (let i = 0; i < rows.length; i += BATCH) {
       const batch = rows.slice(i, i + BATCH);
-      const { data, error } = await supabase.from("ordini").insert(batch).select();
+      const { data, error } = await supabaseClient.from("ordini").insert(batch).select();
       
       if (error) {
         log(`❌ Batch ${Math.floor(i/BATCH)+1} errore: ${error.message} (code: ${error.code})`, "error");
-        // Prova uno per uno per capire quali falliscono
         for (const row of batch) {
-          const { error: singleErr } = await supabase.from("ordini").insert(row);
+          const { error: singleErr } = await supabaseClient.from("ordini").insert(row);
           if (singleErr) {
             log(`  ✗ ${row.numero_ordine}: ${singleErr.message}`, "error");
             failed++;
@@ -730,19 +714,19 @@ async function runImport(keepCustom) {
 
     if (keepCustom && Object.keys(customMap).length > 0) {
       updateLoading("Ripristino dati salvati...", 80);
-      const { data: newRows } = await supabase.from("ordini").select("id, numero_ordine, anno_ordine");
+      const { data: newRows } = await supabaseClient.from("ordini").select("id, numero_ordine, anno_ordine");
       let restored = 0;
       for (const row of (newRows || [])) {
         const saved = customMap[`${row.numero_ordine}_${row.anno_ordine}`];
         if (saved) {
-          await supabase.from("ordini").update(saved).eq("id", row.id);
+          await supabaseClient.from("ordini").update(saved).eq("id", row.id);
           restored++;
         }
       }
       log(`Ripristinati: ${restored}`, "success");
     }
 
-    await supabase.from("meta").upsert({ id: 1, ultima_importazione: new Date().toISOString() });
+    await supabaseClient.from("meta").upsert({ id: 1, ultima_importazione: new Date().toISOString() });
 
     hideLoading();
     cancelPreview();
@@ -755,7 +739,6 @@ async function runImport(keepCustom) {
   }
 }
 
-// ============ MANUAL INSERT ============
 async function saveManualOrder() {
   const numero = $("mNumero").value.trim();
   const data = $("mData").value;
@@ -785,7 +768,7 @@ async function saveManualOrder() {
       inserito_manuale: true
     };
 
-    const { error } = await supabase.from("ordini").insert(record);
+    const { error } = await supabaseClient.from("ordini").insert(record);
     if (error) {
       if (error.code === "23505") {
         toast("Ordine già esistente", "error");
@@ -806,9 +789,8 @@ async function saveManualOrder() {
   }
 }
 
-// ============ LOAD ============
 async function loadOrders() {
-  if (!supabase) {
+  if (!supabaseClient) {
     $("ordersList").innerHTML = '<div class="empty"><i class="bi bi-wifi-off"></i>Supabase non disponibile</div>';
     return;
   }
@@ -817,7 +799,7 @@ async function loadOrders() {
   $("ordersList").innerHTML = '<div class="empty"><i class="bi bi-hourglass-split"></i>Caricamento...</div>';
 
   try {
-    const { data, error } = await supabase.from("ordini").select("*");
+    const { data, error } = await supabaseClient.from("ordini").select("*");
     if (error) throw error;
     allOrders = data || [];
     log(`Caricati ${allOrders.length} ordini`, "success");
@@ -831,7 +813,7 @@ async function loadOrders() {
 
 async function loadMeta() {
   try {
-    const { data } = await supabase.from("meta").select("ultima_importazione").eq("id", 1).maybeSingle();
+    const { data } = await supabaseClient.from("meta").select("ultima_importazione").eq("id", 1).maybeSingle();
     const el = $("lastUpdate");
     if (data && data.ultima_importazione) {
       const d = new Date(data.ultima_importazione);
@@ -844,7 +826,6 @@ async function loadMeta() {
   } catch (e) { log("Errore meta: " + e.message, "warning"); }
 }
 
-// ============ RENDER ============
 function getGraficoInfo(g) {
   const n = (g || "").toUpperCase().replace(/\s+/g, " ").trim();
   if (!n) return { label: "Da smistare", cls: "badge-smistare", icon: "bi-person-plus" };
@@ -960,7 +941,7 @@ async function saveOrder(id) {
   const de = $(`desc_${id}`).value;
   const no = $(`note_${id}`).value;
   try {
-    const { error } = await supabase.from("ordini").update({
+    const { error } = await supabaseClient.from("ordini").update({
       descrizione_breve: de,
       note_interne: no,
       data_evasione_grafica: ev ? new Date(ev).toISOString() : null
@@ -980,7 +961,7 @@ async function deleteOrder(id) {
     [
       { label: "Sì, elimina", className: "btn-danger", onClick: async () => {
         try {
-          const { error } = await supabase.from("ordini").delete().eq("id", id);
+          const { error } = await supabaseClient.from("ordini").delete().eq("id", id);
           if (error) throw error;
           toast("Ordine eliminato");
           await loadOrders();
@@ -1013,9 +994,9 @@ function confirmClear2() {
 }
 async function doClear() {
   try {
-    const { error } = await supabase.from("ordini").delete().gt("id", 0);
+    const { error } = await supabaseClient.from("ordini").delete().gt("id", 0);
     if (error) throw error;
-    await supabase.from("meta").upsert({ id: 1, ultima_importazione: new Date().toISOString() });
+    await supabaseClient.from("meta").upsert({ id: 1, ultima_importazione: new Date().toISOString() });
     allOrders = [];
     renderOrders();
     await loadMeta();
@@ -1076,13 +1057,14 @@ function bindEvents() {
   $("modalBg").onclick = e => { if (e.target === $("modalBg")) closeModal(); };
 }
 
+// INIT
 log("Avvio...", "step");
 log(`Anno corrente: ${currentYear}`, "info");
 log(`Range Sit.3: ${currentYear} oppure ≥ 1 ott ${currentYear-1}`, "info");
 initSupabase();
 bindEvents();
 loadOrders();
-setInterval(() => { if (supabase) loadMeta(); }, 60000);
+setInterval(() => { if (supabaseClient) loadMeta(); }, 60000);
 log("✓ Pronto", "success");
 </script>
 
