@@ -6,34 +6,106 @@
 <title>Dashboard Ordini Grafica</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Inter', sans-serif; background: #fff; color: #111; padding: 16px; padding-bottom: 60px; }
 .container { max-width: 860px; margin: 0 auto; }
 h1 { font-size: 20px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
 .subtitle { font-size: 12px; color: #666; margin-bottom: 20px; }
+
+/* Debug Panel */
+.debug-panel {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  display: none;
+}
+.debug-panel.active { display: block; }
+.debug-panel .log { padding: 2px 0; border-bottom: 1px solid #334155; }
+.debug-panel .log.info { color: #60a5fa; }
+.debug-panel .log.success { color: #4ade80; }
+.debug-panel .log.error { color: #f87171; }
+.debug-panel .log.warning { color: #fbbf24; }
+.debug-panel .log.step { color: #a78bfa; font-weight: bold; }
+.debug-toggle {
+  background: #f1f5f9;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Loading State */
+.loading-state {
+  background: #eff6ff;
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  display: none;
+}
+.loading-state.active { display: block; }
+.loading-state h3 { font-size: 15px; margin-bottom: 8px; color: #1e40af; }
+.loading-state .status { font-size: 13px; color: #3b82f6; margin-bottom: 12px; min-height: 20px; }
+.loading-state .spinner-big {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #dbeafe;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 12px;
+}
+.loading-state .progress-bar {
+  background: #dbeafe;
+  border-radius: 4px;
+  height: 8px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.loading-state .progress-fill {
+  background: #3b82f6;
+  height: 100%;
+  transition: width 0.3s;
+  width: 0%;
+}
+
+/* Rest of styles */
 .dropzone { border: 2px dashed #ccc; border-radius: 12px; padding: 32px; text-align: center; cursor: pointer; background: #f9f9f9; margin-bottom: 16px; transition: all 0.2s; }
-.dropzone:hover { border-color: #2563eb; background: #f0f7ff; }
+.dropzone:hover, .dropzone.dragover { border-color: #2563eb; background: #f0f7ff; }
 .dropzone i { font-size: 32px; color: #999; display: block; margin-bottom: 8px; }
+.dropzone.dragover i { color: #2563eb; }
 .dropzone .label { font-size: 14px; font-weight: 600; color: #333; }
 .dropzone .sublabel { font-size: 12px; color: #888; margin-top: 4px; }
 .preview { background: #f5f5f5; border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 16px; display: none; }
 .preview.active { display: block; }
 .preview h3 { font-size: 14px; margin-bottom: 12px; }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-.stat { background: white; border: 1px solid #eee; border-radius: 8px; padding: 10px; text-align: center; }
-.stat .num { font-size: 22px; font-weight: 700; display: block; }
-.stat .num.ok { color: #10b981; }
-.stat .num.skip { color: #999; }
-.stat .num.total { color: #111; }
-.stat .lbl { font-size: 10px; color: #666; text-transform: uppercase; margin-top: 2px; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.stat-box { background: white; border: 1px solid #eee; border-radius: 8px; padding: 10px; text-align: center; }
+.stat-box .num { font-size: 22px; font-weight: 700; display: block; }
+.stat-box .num.ok { color: #10b981; }
+.stat-box .num.skip { color: #999; }
+.stat-box .num.total { color: #111; }
+.stat-box .lbl { font-size: 10px; color: #666; text-transform: uppercase; margin-top: 2px; }
 .reasons { background: white; border: 1px solid #eee; border-radius: 8px; padding: 8px; font-size: 12px; max-height: 150px; overflow-y: auto; margin-bottom: 12px; }
 .reason { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px solid #f5f5f5; }
 .reason:last-child { border-bottom: none; }
 .reason .count { font-weight: 600; color: #666; }
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-button { font-family: inherit; font-size: 13px; font-weight: 600; padding: 11px 16px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+button { font-family: inherit; font-size: 13px; font-weight: 600; padding: 11px 16px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-primary { background: #2563eb; color: white; }
 .btn-success { background: #10b981; color: white; }
 .btn-danger { background: #dc2626; color: white; }
@@ -43,7 +115,7 @@ button { font-family: inherit; font-size: 13px; font-weight: 600; padding: 11px 
 .search i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #999; }
 .search input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: inherit; }
 .search input:focus { outline: none; border-color: #2563eb; }
-.icon-btn { width: 38px; height: 38px; padding: 0; background: white; border: 1px solid #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #333; }
+.icon-btn { width: 38px; height: 38px; padding: 0; background: white; border: 1px solid #ddd; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #333; }
 .icon-btn.danger { color: #dc2626; }
 .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px; }
 @media (max-width: 640px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
@@ -87,6 +159,7 @@ body.stale .stale-banner { display: block; }
 .modal p { font-size: 13px; color: #666; margin-bottom: 18px; line-height: 1.6; }
 .modal-actions { display: flex; flex-direction: column; gap: 8px; }
 .modal-actions button { padding: 11px; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -108,20 +181,33 @@ body.stale .stale-banner { display: block; }
     </div>
   </div>
 
-  <div class="dropzone" onclick="document.getElementById('csvFile').click()">
+  <button class="debug-toggle" onclick="toggleDebug()">
+    <i class="bi bi-bug"></i> Mostra/Nascondi Debug Console
+  </button>
+
+  <div class="debug-panel" id="debugPanel"></div>
+
+  <div class="loading-state" id="loadingState">
+    <div class="spinner-big"></div>
+    <h3 id="loadingTitle">Elaborazione in corso...</h3>
+    <div class="status" id="loadingStatus">Inizializzazione...</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="dropzone" id="dropzone">
     <i class="bi bi-cloud-upload"></i>
     <div class="label">Clicca per selezionare il CSV di Danea</div>
     <div class="sublabel">oppure trascinalo qui</div>
-    <input type="file" id="csvFile" accept=".csv" onchange="handleFile(this)" style="display:none">
+    <input type="file" id="csvFile" accept=".csv" style="display:none">
   </div>
 
   <div class="preview" id="preview">
     <h3><i class="bi bi-clipboard-data"></i> Anteprima filtraggio</h3>
-    <div class="stats" id="previewStats"></div>
+    <div class="stats-grid" id="previewStats"></div>
     <div class="reasons" id="previewReasons"></div>
     <div class="actions">
       <button class="btn-ghost" onclick="cancelPreview()"><i class="bi bi-x-lg"></i> Annulla</button>
-      <button class="btn-success" onclick="doImport()"><i class="bi bi-cloud-arrow-up"></i> Importa nel database</button>
+      <button class="btn-success" id="importBtn" onclick="doImport()"><i class="bi bi-cloud-arrow-up"></i> Importa nel database</button>
     </div>
   </div>
 
@@ -146,58 +232,136 @@ body.stale .stale-banner { display: block; }
 </div>
 
 <script>
-console.log('Script caricato');
+// ============ DEBUG LOGGER ============
+const debugPanel = document.getElementById('debugPanel');
+function debug(msg, type = 'info') {
+  const time = new Date().toLocaleTimeString('it-IT', {hour12: false});
+  const el = document.createElement('div');
+  el.className = `log ${type}`;
+  el.textContent = `[${time}] ${msg}`;
+  debugPanel.appendChild(el);
+  debugPanel.scrollTop = debugPanel.scrollHeight;
+  console.log(`[${type.toUpperCase()}] ${msg}`);
+}
+function toggleDebug() {
+  debugPanel.classList.toggle('active');
+}
+// Mostra debug di default all'avvio
+debugPanel.classList.add('active');
+
+// ============ LOADING STATE ============
+const loadingState = document.getElementById('loadingState');
+const loadingTitle = document.getElementById('loadingTitle');
+const loadingStatus = document.getElementById('loadingStatus');
+const progressFill = document.getElementById('progressFill');
+
+function showLoading(title, status = '', progress = 0) {
+  loadingTitle.textContent = title;
+  loadingStatus.textContent = status;
+  progressFill.style.width = progress + '%';
+  loadingState.classList.add('active');
+  debug(`⏳ ${title}: ${status}`, 'step');
+}
+function updateLoading(status, progress) {
+  loadingStatus.textContent = status;
+  progressFill.style.width = progress + '%';
+  debug(`→ ${status}`, 'info');
+}
+function hideLoading() {
+  loadingState.classList.remove('active');
+  debug(`✓ Completato`, 'success');
+}
+
+// ============ INIT ============
+debug('🚀 Avvio applicazione...', 'step');
+debug(`URL: ${window.location.href}`, 'info');
+debug(`User Agent: ${navigator.userAgent}`, 'info');
 
 const SUPABASE_URL = 'https://emaiswhuznyqkzzzelvh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_7xF7dZXBDOahRmdanK-cFw_jx0sO0Cw';
+debug(`Supabase URL: ${SUPABASE_URL}`, 'info');
 
 let supabase = null;
 let allOrders = [];
 let pendingImport = null;
 const currentYear = new Date().getFullYear();
+debug(`Anno corrente: ${currentYear}`, 'info');
 
-// Init Supabase
+// Init Supabase con try/catch
 try {
+  debug('Inizializzazione Supabase...', 'info');
+  if (typeof window.supabase === 'undefined') {
+    throw new Error('Libreria Supabase non caricata (CDN bloccata?)');
+  }
   supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  console.log('Supabase inizializzato');
+  debug('✓ Supabase inizializzato correttamente', 'success');
 } catch (e) {
-  console.error('Errore init Supabase:', e);
-  alert('Errore init Supabase: ' + e.message);
+  debug('❌ ERRORE init Supabase: ' + e.message, 'error');
+  debug('Stack: ' + e.stack, 'error');
+  alert('ERRORE CRITICO:\n' + e.message + '\n\nControlla la console di debug (F12)');
 }
 
 // ============ CSV PARSER ROBUSTO ============
+// Gestisce CSV con record concatenati senza newline (blocchi di 11 campi)
 function parseCSV(text) {
-  console.log('Parsing CSV, lunghezza:', text.length);
-  const rows = [];
-  let row = [];
-  let field = '';
-  let inQuotes = false;
+  debug(`Parsing CSV: ${text.length} caratteri`, 'info');
   
   // Normalizza line endings
   text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   
+  // Rimuovi BOM se presente
+  if (text.charCodeAt(0) === 0xFEFF) {
+    text = text.substring(1);
+    debug('Rimosso BOM', 'info');
+  }
+  
+  const allFields = [];
+  let field = '';
+  let inQuotes = false;
+  
+  // Parse tutti i campi, separati da virgole
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
     if (c === '"') {
       if (inQuotes && text[i+1] === '"') { field += '"'; i++; }
       else inQuotes = !inQuotes;
     } else if (c === ',' && !inQuotes) {
-      row.push(field);
+      allFields.push(field.trim());
       field = '';
-    } else if (c === '\n' && !inQuotes) {
-      row.push(field);
-      if (row.some(f => f.trim())) rows.push(row);
-      row = [];
+    } else if ((c === '\n' || c === '\r') && !inQuotes) {
+      // Newline fuori dalle virgolette = fine campo
+      allFields.push(field.trim());
       field = '';
-    } else {
+    } else if (c !== '\n' && c !== '\r') {
       field += c;
     }
   }
-  if (field || row.length) {
-    row.push(field);
-    if (row.some(f => f.trim())) rows.push(row);
+  if (field.trim() || allFields.length > 0) {
+    allFields.push(field.trim());
   }
-  console.log('Righe parsate:', rows.length);
+  
+  debug(`Campi totali estratti: ${allFields.length}`, 'info');
+  
+  // Dividi in righe da 11 campi ciascuna (struttura Danea)
+  const FIELDS_PER_RECORD = 11;
+  const rows = [];
+  
+  for (let i = 0; i < allFields.length; i += FIELDS_PER_RECORD) {
+    const row = allFields.slice(i, i + FIELDS_PER_RECORD);
+    // Salta righe completamente vuote
+    if (row.some(f => f && f.trim())) {
+      rows.push(row);
+    }
+  }
+  
+  debug(`Record estratti: ${rows.length}`, 'success');
+  
+  // Log primi 3 record per verifica
+  if (rows.length > 0) {
+    debug('Primo record: ' + JSON.stringify(rows[0]), 'info');
+    if (rows.length > 1) debug('Secondo record: ' + JSON.stringify(rows[1]), 'info');
+  }
+  
   return rows;
 }
 
@@ -208,12 +372,20 @@ function parseItalianDate(s) {
   if (!m) return null;
   let y = parseInt(m[3]);
   if (y < 100) y += 2000;
-  return new Date(y, parseInt(m[2])-1, parseInt(m[1]));
+  const d = new Date(y, parseInt(m[2])-1, parseInt(m[1]));
+  if (isNaN(d.getTime())) return null;
+  return d;
 }
 
 // ============ FILTRI ============
-function classifyRow(row) {
-  if (row.length < 11) return { valid: false, reason: 'Riga incompleta' };
+function classifyRow(row, rowIndex) {
+  // Struttura Danea:
+  // [0] vuoto/rif.fattura [1] data ordine [2] operatore [3] numero ordine [4] stato
+  // [5] GRAFICO [6] data evasione [7] cliente [8] note [9] prezzo [10] settore
+  
+  if (row.length < 11) {
+    return { valid: false, reason: 'Riga incompleta (' + row.length + ' campi)' };
+  }
 
   const dataOrdineStr = (row[1] || '').trim();
   const numero = (row[3] || '').trim();
@@ -223,44 +395,58 @@ function classifyRow(row) {
   const note = (row[8] || '').trim();
   const settore = (row[10] || '').trim();
 
+  // Salta righe senza data ordine valida
   const dataOrdine = parseItalianDate(dataOrdineStr);
-  if (!dataOrdine) return { valid: false, reason: 'Data ordine non valida' };
+  if (!dataOrdine) {
+    return { valid: false, reason: `Data non valida: "${dataOrdineStr}"` };
+  }
 
   const statoLower = stato.toLowerCase();
   const graficoUpper = grafico.toUpperCase().replace(/\s+/g, ' ').trim();
+  const noteUpper = note.toUpperCase();
 
   // 1. Escludi Annullati
-  if (statoLower.includes('annullato')) return { valid: false, reason: 'Annullato' };
+  if (statoLower.includes('annullato')) {
+    return { valid: false, reason: 'Annullato' };
+  }
 
   // 2. Solo Da confermare o Confermato
   if (!statoLower.includes('da confermare') && !statoLower.includes('confermato')) {
-    return { valid: false, reason: `Stato: ${stato || 'n/d'}` };
+    return { valid: false, reason: `Stato: "${stato || 'n/d'}"` };
   }
 
   // 3. Escludi SOSPESO
-  if (graficoUpper === 'SOSPESO' || statoLower.includes('sospeso') || note.toUpperCase().includes('SOSPESO')) {
+  if (graficoUpper === 'SOSPESO' || 
+      statoLower.includes('sospeso') || 
+      noteUpper.includes('SOSPESO')) {
     return { valid: false, reason: 'Sospeso' };
   }
 
   // 4. Escludi /B
-  if (numero.toUpperCase().includes('/B')) return { valid: false, reason: 'Numero /B' };
+  if (numero.toUpperCase().includes('/B')) {
+    return { valid: false, reason: 'Numero /B' };
+  }
 
   // 5. Escludi SALVO G. - COMPLETATO e FABRIS
   if (graficoUpper.includes('SALVO G.') || graficoUpper.includes('FABRIS')) {
-    return { valid: false, reason: `Grafico: ${grafico}` };
+    return { valid: false, reason: `Grafico escluso: "${grafico}"` };
   }
 
-  // 6. Grafico valido (o vuoto)
-  const graficiValidi = ['ALBERTO', 'ALBERTO - COMPLETATO', 'PIETRO', 'PIETRO - COMPLETATO', 
-                          'COMPLETATO', 'SAMUELE', 'SAMUELE - COMPLETATO'];
+  // 6. Grafico valido (o vuoto = da smistare)
+  const graficiValidi = [
+    'ALBERTO', 'ALBERTO - COMPLETATO', 
+    'PIETRO', 'PIETRO - COMPLETATO', 
+    'COMPLETATO', 
+    'SAMUELE', 'SAMUELE - COMPLETATO'
+  ];
   if (graficoUpper && !graficiValidi.includes(graficoUpper)) {
-    return { valid: false, reason: `Grafico non valido: ${grafico}` };
+    return { valid: false, reason: `Grafico non valido: "${grafico}"` };
   }
 
-  // 7. Filtro anno
+  // 7. Filtro anno (precedente, attuale, successivo)
   const year = dataOrdine.getFullYear();
   if (year < currentYear - 1 || year > currentYear + 1) {
-    return { valid: false, reason: `Anno ${year}` };
+    return { valid: false, reason: `Anno ${year} (fuori range)` };
   }
 
   return {
@@ -268,7 +454,7 @@ function classifyRow(row) {
     data: {
       numero_ordine: numero,
       anno_ordine: year,
-      cliente: cliente,
+      cliente: cliente || 'Cliente n/d',
       data_ordine: dataOrdine.toISOString().split('T')[0],
       grafico: grafico,
       stato: stato,
@@ -279,26 +465,41 @@ function classifyRow(row) {
 
 // ============ PROCESSAMENTO ============
 function processCSV(text) {
-  console.log('Processamento CSV...');
+  debug('═══ INIZIO PROCESSAMENTO CSV ═══', 'step');
   const rows = parseCSV(text);
   const valid = [];
   const reasons = {};
   let totalRows = 0;
+  let skipped = 0;
 
-  rows.forEach(row => {
-    // Salta header
-    if (row[1] && /data/i.test(row[1]) && /numero/i.test(row[3] || '')) return;
+  debug(`Analisi di ${rows.length} record...`, 'info');
+
+  rows.forEach((row, idx) => {
+    // Salta header se presente
+    if (row[1] && /data/i.test(row[1]) && row[3] && /numero|ordine/i.test(row[3])) {
+      debug(`Riga ${idx}: HEADER saltato`, 'info');
+      return;
+    }
     
     totalRows++;
-    const result = classifyRow(row);
+    const result = classifyRow(row, idx);
+    
     if (result.valid) {
       valid.push(result.data);
     } else {
+      skipped++;
       reasons[result.reason] = (reasons[result.reason] || 0) + 1;
+      if (skipped <= 5) {
+        debug(`Riga ${idx} scartata: ${result.reason}`, 'warning');
+      }
     }
   });
 
-  // Deduplica
+  debug(`Totale analizzati: ${totalRows}`, 'info');
+  debug(`Validi: ${valid.length}`, 'success');
+  debug(`Scartati: ${skipped}`, skipped > 0 ? 'warning' : 'info');
+
+  // Deduplica per numero+anno, tieni anno corrente se duplicati
   const unique = new Map();
   valid.forEach(o => {
     const key = `${o.numero_ordine}_${o.anno_ordine}`;
@@ -307,82 +508,130 @@ function processCSV(text) {
     }
   });
 
-  return {
+  const result = {
     total: totalRows,
     valid: Array.from(unique.values()),
     validCount: unique.size,
-    skipCount: totalRows - valid.length,
+    skipCount: skipped,
     reasons
   };
+  
+  debug(`Ordini unici finali: ${result.validCount}`, 'success');
+  debug('═══ FINE PROCESSAMENTO CSV ═══', 'step');
+  
+  return result;
 }
 
 // ============ DRAG & DROP ============
-const dropzone = document.querySelector('.dropzone');
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('csvFile');
+
+dropzone.addEventListener('click', () => {
+  debug('Click su dropzone', 'info');
+  fileInput.click();
+});
+
 dropzone.addEventListener('dragover', (e) => {
   e.preventDefault();
-  dropzone.style.borderColor = '#2563eb';
-  dropzone.style.background = '#f0f7ff';
+  dropzone.classList.add('dragover');
 });
 dropzone.addEventListener('dragleave', () => {
-  dropzone.style.borderColor = '#ccc';
-  dropzone.style.background = '#f9f9f9';
+  dropzone.classList.remove('dragover');
 });
 dropzone.addEventListener('drop', (e) => {
   e.preventDefault();
-  dropzone.style.borderColor = '#ccc';
-  dropzone.style.background = '#f9f9f9';
+  dropzone.classList.remove('dragover');
+  debug('File trascinato', 'info');
   if (e.dataTransfer.files[0]) {
-    document.getElementById('csvFile').files = e.dataTransfer.files;
-    handleFile(document.getElementById('csvFile'));
+    handleFile(e.dataTransfer.files[0]);
   }
 });
 
-function handleFile(input) {
-  console.log('handleFile chiamata');
-  const file = input.files[0];
-  if (!file) {
-    console.log('Nessun file');
-    return;
+fileInput.addEventListener('change', (e) => {
+  debug('File selezionato da input', 'info');
+  if (e.target.files[0]) {
+    handleFile(e.target.files[0]);
   }
-  console.log('File:', file.name, file.size);
+  e.target.value = '';
+});
+
+async function handleFile(file) {
+  debug(`═══ HANDLE FILE ═══`, 'step');
+  debug(`Nome: ${file.name}`, 'info');
+  debug(`Dimensione: ${file.size} bytes`, 'info');
+  debug(`Tipo: ${file.type || 'non specificato'}`, 'info');
   
   if (!file.name.toLowerCase().endsWith('.csv')) {
+    debug('❌ File non CSV', 'error');
     alert('Seleziona un file CSV');
     return;
   }
   
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    console.log('File letto');
-    try {
-      const text = e.target.result;
-      const result = processCSV(text);
-      console.log('Risultato:', result);
-      
-      pendingImport = result;
-      showPreview(result);
-    } catch (err) {
-      console.error('Errore:', err);
-      alert('Errore elaborazione: ' + err.message);
+  showLoading('Lettura file...', 'Caricamento del CSV in memoria', 10);
+  
+  try {
+    // Usa Promise per FileReader
+    const text = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        debug(`File letto: ${e.target.result.length} caratteri`, 'success');
+        resolve(e.target.result);
+      };
+      reader.onerror = () => reject(new Error('Errore lettura file'));
+      reader.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          updateLoading(`Lettura file... ${pct}%`, 'Caricamento in corso', 10 + (pct * 0.2));
+        }
+      };
+      debug('Avvio FileReader...', 'info');
+      reader.readAsText(file, 'UTF-8');
+    });
+    
+    updateLoading('Analisi CSV...', 'Parsing dei campi e dei record', 40);
+    await new Promise(r => setTimeout(r, 50)); // Yield per UI
+    
+    const result = processCSV(text);
+    
+    if (result.validCount === 0) {
+      debug('⚠️ Nessun ordine valido trovato', 'warning');
+      updateLoading('Nessun ordine valido', '', 100);
+      setTimeout(() => {
+        hideLoading();
+        alert('Nessun ordine valido trovato nel CSV.\n\nControlla la console di debug per vedere i motivi di scarto.');
+      }, 500);
+      return;
     }
-  };
-  reader.onerror = function() {
-    alert('Errore lettura file');
-  };
-  reader.readAsText(file);
+    
+    updateLoading('Preparazione anteprima...', `${result.validCount} ordini pronti`, 90);
+    await new Promise(r => setTimeout(r, 50));
+    
+    pendingImport = result;
+    showPreview(result);
+    
+    hideLoading();
+    debug(`✓ Anteprima mostrata con ${result.validCount} ordini`, 'success');
+    
+  } catch (err) {
+    debug('❌ ERRORE in handleFile: ' + err.message, 'error');
+    debug('Stack: ' + err.stack, 'error');
+    hideLoading();
+    alert('Errore elaborazione file:\n' + err.message);
+  }
 }
 
 function showPreview(result) {
+  debug('Mostra anteprima', 'info');
   document.getElementById('previewStats').innerHTML = `
-    <div class="stat">
+    <div class="stat-box">
       <span class="num total">${result.total}</span>
       <span class="lbl">Righe lette</span>
     </div>
-    <div class="stat">
+    <div class="stat-box">
       <span class="num ok">${result.validCount}</span>
       <span class="lbl">Da importare</span>
     </div>
-    <div class="stat">
+    <div class="stat-box">
       <span class="num skip">${result.skipCount}</span>
       <span class="lbl">Scartati</span>
     </div>
@@ -391,7 +640,7 @@ function showPreview(result) {
   const reasons = Object.entries(result.reasons).sort((a,b) => b[1]-a[1]);
   const reasonsEl = document.getElementById('previewReasons');
   if (reasons.length === 0) {
-    reasonsEl.innerHTML = '<div class="reason"><span>Nessun ordine scartato 🎉</span></div>';
+    reasonsEl.innerHTML = '<div class="reason"><span>🎉 Nessun ordine scartato</span></div>';
   } else {
     reasonsEl.innerHTML = reasons.map(([reason, count]) => 
       `<div class="reason"><span>${escapeHtml(reason)}</span><span class="count">${count}</span></div>`
@@ -402,14 +651,14 @@ function showPreview(result) {
 }
 
 function cancelPreview() {
+  debug('Anteprima annullata', 'info');
   document.getElementById('preview').classList.remove('active');
   pendingImport = null;
-  document.getElementById('csvFile').value = '';
 }
 
 async function doImport() {
   if (!pendingImport) return;
-  console.log('doImport, ordini:', pendingImport.valid.length);
+  debug('═══ AVVIO IMPORT ═══', 'step');
   
   if (pendingImport.valid.length === 0) {
     alert('Nessun ordine valido da importare');
@@ -417,13 +666,35 @@ async function doImport() {
     return;
   }
   
+  if (!supabase) {
+    debug('❌ Supabase non inizializzato', 'error');
+    alert('Errore: Supabase non disponibile');
+    return;
+  }
+  
+  const btn = document.getElementById('importBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-big" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;"></span> Verifica...';
+  
+  showLoading('Verifica conflitti...', 'Controllo ordini già presenti nel database', 10);
+  
   try {
-    console.log('Verifica conflitti...');
+    debug(`Verifica conflitti per ${pendingImport.valid.length} ordini...`, 'info');
+    
     const numeri = pendingImport.valid.map(o => o.numero_ordine);
-    const { data: existing } = await supabase
+    debug(`Query Supabase: SELECT ordini con numeri in (${numeri.slice(0,3).join(', ')}...)`, 'info');
+    
+    const { data: existing, error: qError } = await supabase
       .from('ordini')
       .select('numero_ordine, anno_ordine, note_interne, descrizione_breve, data_evasione_grafica')
       .in('numero_ordine', numeri);
+    
+    if (qError) {
+      debug('❌ Errore query: ' + qError.message, 'error');
+      throw qError;
+    }
+    
+    debug(`Trovati ${existing?.length || 0} ordini esistenti`, 'info');
     
     const existingMap = {};
     (existing || []).forEach(o => {
@@ -435,13 +706,16 @@ async function doImport() {
       return ex && (ex.note_interne || ex.descrizione_breve || ex.data_evasione_grafica);
     });
     
+    updateLoading('Verifica completata', hasCustomData ? 'Dati custom trovati' : 'Nessun conflitto', 100);
+    
     if (hasCustomData) {
+      debug('⚠️ Trovati dati custom, chiedo conferma', 'warning');
       showModal(
         '⚠️ Dati esistenti trovati',
         'Alcuni ordini hanno note, descrizioni o date evasione inserite manualmente. Come vuoi procedere?',
         [
-          { label: 'Mantieni dati esistenti', class: 'btn-ghost', action: () => importToDB(false) },
-          { label: 'Sovrascrivi tutto', class: 'btn-danger', action: () => importToDB(true) },
+          { label: '🛡️ Mantieni dati esistenti', class: 'btn-ghost', action: () => importToDB(false) },
+          { label: '🔄 Sovrascrivi tutto', class: 'btn-danger', action: () => importToDB(true) },
           { label: 'Annulla', class: 'btn-ghost', action: cancelPreview }
         ]
       );
@@ -449,75 +723,111 @@ async function doImport() {
       importToDB(true);
     }
   } catch (err) {
-    console.error('Errore:', err);
+    debug('❌ ERRORE in doImport: ' + err.message, 'error');
+    hideLoading();
     alert('Errore: ' + err.message);
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-cloud-arrow-up"></i> Importa nel database';
   }
 }
 
 async function importToDB(overwrite) {
-  console.log('Import DB, overwrite:', overwrite);
+  debug(`Import DB (overwrite=${overwrite})`, 'step');
   document.getElementById('preview').classList.remove('active');
+  
+  const orders = pendingImport.valid;
+  showLoading('Importazione...', `0/${orders.length} ordini`, 0);
   
   try {
     if (overwrite) {
-      const BATCH = 100;
+      const BATCH = 50;
       let inserted = 0;
+      let errors = 0;
       
-      for (let i = 0; i < pendingImport.valid.length; i += BATCH) {
-        const batch = pendingImport.valid.slice(i, i + BATCH);
-        console.log(`Batch ${i/BATCH + 1}, elementi:`, batch.length);
+      for (let i = 0; i < orders.length; i += BATCH) {
+        const batch = orders.slice(i, i + BATCH);
+        const pct = Math.round((i / orders.length) * 100);
+        updateLoading(
+          'Importazione batch...', 
+          `${inserted}/${orders.length} inseriti (${pct}%)`,
+          pct
+        );
+        
+        debug(`Batch ${Math.floor(i/BATCH) + 1}: ${batch.length} ordini`, 'info');
+        
         const { data, error } = await supabase
           .from('ordini')
           .upsert(batch, { onConflict: 'numero_ordine,anno_ordine' })
           .select();
         
         if (error) {
-          console.error('Errore batch:', error);
-          alert('Errore batch: ' + error.message);
+          debug(`❌ Errore batch: ${error.message}`, 'error');
+          errors++;
         } else {
           inserted += (data || []).length;
+          debug(`✓ Batch completato: ${data?.length || 0} ordini`, 'success');
         }
+        
+        // Yield per UI
+        await new Promise(r => setTimeout(r, 10));
       }
       
+      updateLoading('Aggiornamento timestamp...', '', 95);
       await supabase.from('meta').update({ ultima_importazione: new Date().toISOString() }).eq('id', 1);
-      alert(`Importati ${inserted} ordini`);
+      
+      debug(`✓ Import completato: ${inserted} ordini, ${errors} errori`, 'success');
+      updateLoading(`✓ ${inserted} ordini importati`, errors > 0 ? `${errors} errori` : '', 100);
     }
     
     cancelPreview();
+    await new Promise(r => setTimeout(r, 300));
+    hideLoading();
     await loadOrders();
   } catch (err) {
-    console.error('Errore:', err);
-    alert('Errore: ' + err.message);
+    debug('❌ ERRORE in importToDB: ' + err.message, 'error');
+    hideLoading();
+    alert('Errore import: ' + err.message);
   }
 }
 
-// ============ CARICAMENTO ============
+// ============ CARICAMENTO ORDINI ============
 async function loadOrders() {
-  console.log('Caricamento ordini...');
+  debug('═══ CARICAMENTO ORDINI ═══', 'step');
   const list = document.getElementById('ordersList');
-  list.innerHTML = '<div class="empty"><i class="bi bi-hourglass-split"></i>Caricamento...</div>';
+  list.innerHTML = '<div class="empty"><i class="bi bi-hourglass-split"></i>Caricamento ordini...</div>';
+  
+  if (!supabase) {
+    debug('❌ Supabase non disponibile', 'error');
+    list.innerHTML = `<div class="empty"><i class="bi bi-exclamation-triangle"></i>Supabase non inizializzato</div>`;
+    return;
+  }
   
   try {
+    debug('Query SELECT * FROM ordini...', 'info');
     const { data, error } = await supabase
       .from('ordini')
       .select('*')
       .order('data_evasione_grafica', { ascending: true, nullsFirst: true })
       .order('data_ordine', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      debug('❌ Errore query: ' + error.message, 'error');
+      throw error;
+    }
     
     allOrders = data || [];
-    console.log('Ordini caricati:', allOrders.length);
+    debug(`✓ Caricati ${allOrders.length} ordini`, 'success');
     renderOrders();
     await loadMeta();
   } catch (err) {
-    console.error('Errore:', err);
+    debug('❌ ERRORE loadOrders: ' + err.message, 'error');
     list.innerHTML = `<div class="empty"><i class="bi bi-exclamation-triangle"></i>Errore: ${err.message}</div>`;
   }
 }
 
 async function loadMeta() {
   try {
+    debug('Caricamento meta (timestamp)...', 'info');
     const { data } = await supabase.from('meta').select('ultima_importazione').eq('id', 1).maybeSingle();
     const el = document.getElementById('lastUpdate');
     
@@ -527,11 +837,13 @@ async function loadMeta() {
       const formatted = date.toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
       el.innerHTML = `<i class="bi bi-clock"></i> Aggiornato ${formatted}`;
       document.body.classList.toggle('stale', diff > 24);
+      debug(`Ultimo aggiornamento: ${formatted} (${diff.toFixed(1)}h fa)`, 'info');
     } else {
       el.innerHTML = '<i class="bi bi-clock"></i> Nessun aggiornamento';
+      debug('Nessun timestamp trovato', 'warning');
     }
   } catch (err) {
-    console.error('Errore meta:', err);
+    debug('Errore loadMeta: ' + err.message, 'error');
   }
 }
 
@@ -647,7 +959,7 @@ function renderOrders() {
 
 // ============ SALVATAGGIO ============
 async function saveOrder(id) {
-  console.log('Salvataggio ordine', id);
+  debug(`Salvataggio ordine ${id}`, 'info');
   const evasione = document.getElementById(`evade_${id}`).value;
   const desc = document.getElementById(`desc_${id}`).value;
   const note = document.getElementById(`note_${id}`).value;
@@ -665,10 +977,11 @@ async function saveOrder(id) {
     const ord = allOrders.find(o => o.id === id);
     if (ord) Object.assign(ord, update);
     
+    debug(`✓ Ordine ${id} salvato`, 'success');
     alert('Salvato');
     renderOrders();
   } catch (err) {
-    console.error('Errore:', err);
+    debug(`❌ Errore salvataggio: ${err.message}`, 'error');
     alert('Errore: ' + err.message);
   }
 }
@@ -686,17 +999,19 @@ function confirmClear() {
 }
 
 async function doClear() {
+  debug('Svuotamento database...', 'step');
   try {
     const { error } = await supabase.from('ordini').delete().neq('id', -1);
     if (error) throw error;
     
     await supabase.from('meta').update({ ultima_importazione: new Date().toISOString() }).eq('id', 1);
+    debug('✓ Database svuotato', 'success');
     alert('Database svuotato');
     allOrders = [];
     renderOrders();
     loadMeta();
   } catch (err) {
-    console.error('Errore:', err);
+    debug('❌ Errore svuotamento: ' + err.message, 'error');
     alert('Errore: ' + err.message);
   }
 }
@@ -725,9 +1040,10 @@ function showModal(title, text, buttons) {
   document.getElementById('modal').classList.add('active');
 }
 
-// ============ INIT ============
-console.log('Init...');
+// ============ STARTUP ============
+debug('Avvio caricamento ordini iniziali...', 'step');
 loadOrders();
+debug('✓ Applicazione pronta', 'success');
 </script>
 
 </body>
