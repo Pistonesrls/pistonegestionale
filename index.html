@@ -6,191 +6,145 @@
 <title>Dashboard Ordini Grafica</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: #fff; color: #111; padding: 16px; padding-bottom: 60px; }
-.container { max-width: 860px; margin: 0 auto; }
-h1 { font-size: 20px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-.subtitle { font-size: 12px; color: #666; margin-bottom: 20px; }
+body { font-family:'Inter',sans-serif; background:#fff; color:#111; padding:16px; padding-bottom:60px; }
+.container { max-width:860px; margin:0 auto; }
+h1 { font-size:20px; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+.subtitle { font-size:12px; color:#666; margin-bottom:16px; }
 
-/* Debug Panel */
-.debug-panel {
-  background: #1e293b;
-  color: #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  max-height: 300px;
-  overflow-y: auto;
-  display: none;
-}
-.debug-panel.active { display: block; }
-.debug-panel .log { padding: 2px 0; border-bottom: 1px solid #334155; }
-.debug-panel .log.info { color: #60a5fa; }
-.debug-panel .log.success { color: #4ade80; }
-.debug-panel .log.error { color: #f87171; }
-.debug-panel .log.warning { color: #fbbf24; }
-.debug-panel .log.step { color: #a78bfa; font-weight: bold; }
-.debug-toggle {
-  background: #f1f5f9;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  margin-bottom: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
+/* Debug */
+.debug-toggle { background:#f1f5f9; border:1px solid #e5e7eb; border-radius:8px; padding:7px 12px; font-size:12px; cursor:pointer; margin-bottom:10px; display:inline-flex; align-items:center; gap:6px; font-family:inherit; }
+.debug-panel { background:#1e293b; color:#e2e8f0; border-radius:10px; padding:14px; margin-bottom:16px; font-family:monospace; font-size:11px; max-height:260px; overflow-y:auto; display:none; }
+.debug-panel.active { display:block; }
+.debug-panel .log { padding:2px 0; border-bottom:1px solid #334155; }
+.debug-panel .info { color:#60a5fa; }
+.debug-panel .success { color:#4ade80; }
+.debug-panel .error { color:#f87171; }
+.debug-panel .warning { color:#fbbf24; }
+.debug-panel .step { color:#a78bfa; font-weight:bold; }
 
-/* Loading State */
-.loading-state {
-  background: #eff6ff;
-  border: 2px solid #3b82f6;
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  margin-bottom: 16px;
-  display: none;
-}
-.loading-state.active { display: block; }
-.loading-state h3 { font-size: 15px; margin-bottom: 8px; color: #1e40af; }
-.loading-state .status { font-size: 13px; color: #3b82f6; margin-bottom: 12px; min-height: 20px; }
-.loading-state .spinner-big {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #dbeafe;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 12px;
-}
-.loading-state .progress-bar {
-  background: #dbeafe;
-  border-radius: 4px;
-  height: 8px;
-  overflow: hidden;
-  margin-top: 8px;
-}
-.loading-state .progress-fill {
-  background: #3b82f6;
-  height: 100%;
-  transition: width 0.3s;
-  width: 0%;
-}
+/* Loading */
+.loading-state { background:#eff6ff; border:2px solid #3b82f6; border-radius:12px; padding:20px; text-align:center; margin-bottom:16px; display:none; }
+.loading-state.active { display:block; }
+.loading-state h3 { font-size:15px; margin-bottom:6px; color:#1e40af; }
+.loading-state .status { font-size:13px; color:#3b82f6; margin-bottom:10px; min-height:18px; }
+.spinner-big { width:36px; height:36px; border:4px solid #dbeafe; border-top-color:#3b82f6; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 10px; }
+.progress-bar { background:#dbeafe; border-radius:4px; height:8px; overflow:hidden; }
+.progress-fill { background:#3b82f6; height:100%; width:0%; transition:width .3s; }
 
-/* Rest of styles */
-.dropzone { border: 2px dashed #ccc; border-radius: 12px; padding: 32px; text-align: center; cursor: pointer; background: #f9f9f9; margin-bottom: 16px; transition: all 0.2s; }
-.dropzone:hover, .dropzone.dragover { border-color: #2563eb; background: #f0f7ff; }
-.dropzone i { font-size: 32px; color: #999; display: block; margin-bottom: 8px; }
-.dropzone.dragover i { color: #2563eb; }
-.dropzone .label { font-size: 14px; font-weight: 600; color: #333; }
-.dropzone .sublabel { font-size: 12px; color: #888; margin-top: 4px; }
-.preview { background: #f5f5f5; border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 16px; display: none; }
-.preview.active { display: block; }
-.preview h3 { font-size: 14px; margin-bottom: 12px; }
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-.stat-box { background: white; border: 1px solid #eee; border-radius: 8px; padding: 10px; text-align: center; }
-.stat-box .num { font-size: 22px; font-weight: 700; display: block; }
-.stat-box .num.ok { color: #10b981; }
-.stat-box .num.skip { color: #999; }
-.stat-box .num.total { color: #111; }
-.stat-box .lbl { font-size: 10px; color: #666; text-transform: uppercase; margin-top: 2px; }
-.reasons { background: white; border: 1px solid #eee; border-radius: 8px; padding: 8px; font-size: 12px; max-height: 150px; overflow-y: auto; margin-bottom: 12px; }
-.reason { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px solid #f5f5f5; }
-.reason:last-child { border-bottom: none; }
-.reason .count { font-weight: 600; color: #666; }
-.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-button { font-family: inherit; font-size: 13px; font-weight: 600; padding: 11px 16px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary { background: #2563eb; color: white; }
-.btn-success { background: #10b981; color: white; }
-.btn-danger { background: #dc2626; color: white; }
-.btn-ghost { background: white; color: #111; border: 1px solid #ddd; }
-.toolbar { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; }
-.search { flex: 1; position: relative; }
-.search i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #999; }
-.search input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: inherit; }
-.search input:focus { outline: none; border-color: #2563eb; }
-.icon-btn { width: 38px; height: 38px; padding: 0; background: white; border: 1px solid #ddd; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #333; }
-.icon-btn.danger { color: #dc2626; }
-.stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px; }
-@media (max-width: 640px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
-.s { background: #f5f5f5; border: 1px solid #eee; border-radius: 10px; padding: 10px 6px; text-align: center; }
-.s .n { font-size: 18px; font-weight: 700; display: block; }
-.s .l { font-size: 10px; color: #666; text-transform: uppercase; margin-top: 2px; }
-.card { background: white; border: 1px solid #eee; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
-.card.no-evade { border-left: 3px solid #f59e0b; }
-.card.overdue { border-left: 3px solid #dc2626; background: #fef2f2; }
-.card-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
-.order-num { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-.order-date { font-size: 11px; color: #888; margin-top: 2px; }
-.cliente { font-size: 15px; font-weight: 600; margin: 4px 0 2px; }
-.desc { font-size: 12px; color: #888; font-style: italic; }
-.desc.placeholder { opacity: 0.5; }
-.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; flex-shrink: 0; }
-.badge-alberto { background: #f3e8ff; color: #7c3aed; }
-.badge-pietro { background: #e0f2fe; color: #0891b2; }
-.badge-samuele { background: #d1fae5; color: #059669; }
-.badge-salvo { background: #f1f5f9; color: #475569; }
-.badge-smistare { background: #fef3c7; color: #d97706; }
-.tag { display: inline-block; background: #f1f5f9; padding: 2px 7px; border-radius: 4px; font-size: 10px; color: #64748b; font-weight: 500; margin-top: 4px; }
-.tag.highlight { background: #fef3c7; color: #d97706; font-weight: 600; }
-.fields { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
-.field { display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
-.field label { font-size: 11px; color: #666; font-weight: 500; padding-top: 7px; }
-.field input, .field textarea { width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-family: inherit; }
-.field input:focus, .field textarea:focus { outline: none; border-color: #2563eb; }
-.field textarea { resize: vertical; min-height: 36px; }
-.save-btn { width: 100%; padding: 8px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 4px; }
-.stale-banner { display: none; background: #dc2626; color: white; padding: 14px; border-radius: 10px; text-align: center; font-weight: 600; margin-bottom: 16px; }
-.stale-banner small { display: block; font-weight: 400; opacity: 0.9; margin-top: 4px; }
-body.stale { background: #fef2f2; }
-body.stale .stale-banner { display: block; }
-.empty { text-align: center; padding: 40px 20px; color: #999; }
-.empty i { font-size: 40px; margin-bottom: 12px; display: block; opacity: 0.4; }
-.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; padding: 20px; align-items: center; justify-content: center; }
-.modal-bg.active { display: flex; }
-.modal { background: white; border-radius: 14px; padding: 24px; max-width: 440px; width: 100%; }
-.modal h3 { font-size: 16px; margin-bottom: 10px; }
-.modal p { font-size: 13px; color: #666; margin-bottom: 18px; line-height: 1.6; }
-.modal-actions { display: flex; flex-direction: column; gap: 8px; }
-.modal-actions button { padding: 11px; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* Dropzone */
+.dropzone { border:2px dashed #ccc; border-radius:12px; padding:30px; text-align:center; cursor:pointer; background:#f9f9f9; margin-bottom:16px; transition:all .2s; }
+.dropzone:hover,.dropzone.dragover { border-color:#2563eb; background:#f0f7ff; }
+.dropzone i { font-size:30px; color:#999; display:block; margin-bottom:8px; }
+.dropzone .label { font-size:14px; font-weight:600; color:#333; }
+.dropzone .sublabel { font-size:12px; color:#888; margin-top:4px; }
+
+/* Preview */
+.preview { background:#f5f5f5; border:1px solid #ddd; border-radius:12px; padding:16px; margin-bottom:16px; display:none; }
+.preview.active { display:block; }
+.preview h3 { font-size:14px; margin-bottom:12px; }
+.stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+.stat-box { background:#fff; border:1px solid #eee; border-radius:8px; padding:10px; text-align:center; }
+.stat-box .num { font-size:22px; font-weight:700; display:block; }
+.stat-box .num.ok { color:#10b981; } .stat-box .num.skip { color:#999; } .stat-box .num.total { color:#111; }
+.stat-box .lbl { font-size:10px; color:#666; text-transform:uppercase; margin-top:2px; }
+.reasons { background:#fff; border:1px solid #eee; border-radius:8px; padding:8px; font-size:12px; max-height:150px; overflow-y:auto; margin-bottom:12px; }
+.reason { display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #f5f5f5; }
+.reason:last-child { border-bottom:none; }
+.reason .count { font-weight:600; color:#666; }
+.actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+button { font-family:inherit; font-size:13px; font-weight:600; padding:11px 16px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+button:disabled { opacity:.5; cursor:not-allowed; }
+.btn-primary { background:#2563eb; color:#fff; }
+.btn-success { background:#10b981; color:#fff; }
+.btn-danger { background:#dc2626; color:#fff; }
+.btn-ghost { background:#fff; color:#111; border:1px solid #ddd; }
+
+.toolbar { display:flex; gap:8px; margin-bottom:16px; align-items:center; }
+.search { flex:1; position:relative; }
+.search i { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#999; }
+.search input { width:100%; padding:9px 12px 9px 34px; border:1px solid #ddd; border-radius:8px; font-size:13px; font-family:inherit; }
+.search input:focus { outline:none; border-color:#2563eb; }
+.icon-btn { width:38px; height:38px; padding:0; background:#fff; border:1px solid #ddd; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:#333; }
+.icon-btn.danger { color:#dc2626; }
+
+.stats-row { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:16px; }
+@media (max-width:640px){ .stats-row { grid-template-columns:repeat(3,1fr); } }
+.s { background:#f5f5f5; border:1px solid #eee; border-radius:10px; padding:10px 6px; text-align:center; }
+.s .n { font-size:18px; font-weight:700; display:block; }
+.s .l { font-size:10px; color:#666; text-transform:uppercase; margin-top:2px; }
+
+.card { background:#fff; border:1px solid #eee; border-radius:12px; padding:14px; margin-bottom:10px; }
+.card.no-evade { border-left:3px solid #f59e0b; }
+.card.overdue { border-left:3px solid #dc2626; background:#fef2f2; }
+.card-head { display:flex; justify-content:space-between; gap:10px; margin-bottom:6px; }
+.order-num { font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px; }
+.order-date { font-size:11px; color:#888; margin-top:2px; }
+.cliente { font-size:15px; font-weight:600; margin:4px 0 2px; }
+.desc { font-size:12px; color:#888; font-style:italic; }
+.desc.placeholder { opacity:.5; }
+.badge { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; flex-shrink:0; }
+.badge-alberto { background:#f3e8ff; color:#7c3aed; }
+.badge-pietro { background:#e0f2fe; color:#0891b2; }
+.badge-samuele { background:#d1fae5; color:#059669; }
+.badge-salvo { background:#f1f5f9; color:#475569; }
+.badge-smistare { background:#fef3c7; color:#d97706; }
+.tag { display:inline-block; background:#f1f5f9; padding:2px 7px; border-radius:4px; font-size:10px; color:#64748b; font-weight:500; margin-top:4px; }
+.fields { margin-top:10px; padding-top:10px; border-top:1px solid #f1f5f9; }
+.field { display:grid; grid-template-columns:100px 1fr; gap:8px; align-items:flex-start; margin-bottom:8px; }
+.field label { font-size:11px; color:#666; font-weight:500; padding-top:7px; }
+.field input,.field textarea { width:100%; padding:7px 10px; border:1px solid #ddd; border-radius:6px; font-size:13px; font-family:inherit; }
+.field input:focus,.field textarea:focus { outline:none; border-color:#2563eb; }
+.field textarea { resize:vertical; min-height:36px; }
+.save-btn { width:100%; padding:8px; background:#2563eb; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; margin-top:4px; }
+
+.stale-banner { display:none; background:#dc2626; color:#fff; padding:14px; border-radius:10px; text-align:center; font-weight:600; margin-bottom:16px; }
+.stale-banner small { display:block; font-weight:400; opacity:.9; margin-top:4px; }
+body.stale { background:#fef2f2; }
+body.stale .stale-banner { display:block; }
+
+.empty { text-align:center; padding:40px 20px; color:#999; }
+.empty i { font-size:40px; margin-bottom:12px; display:block; opacity:.4; }
+
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:1000; padding:20px; align-items:center; justify-content:center; }
+.modal-bg.active { display:flex; }
+.modal { background:#fff; border-radius:14px; padding:24px; max-width:440px; width:100%; }
+.modal h3 { font-size:16px; margin-bottom:10px; }
+.modal p { font-size:13px; color:#666; margin-bottom:18px; line-height:1.6; }
+.modal-actions { display:flex; flex-direction:column; gap:8px; }
+.modal-actions button { padding:11px; }
+@keyframes spin { to { transform:rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <div class="stale-banner" id="staleBanner">
+  <div class="stale-banner">
     <i class="bi bi-exclamation-triangle-fill"></i> ATTENZIONE: DATI NON AGGIORNATI
     <small>Ultimo caricamento oltre 24h fa</small>
   </div>
 
-  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
     <div>
       <h1><i class="bi bi-list-check"></i> Ordini Grafica</h1>
       <div class="subtitle" id="lastUpdate">Caricamento...</div>
     </div>
-    <div style="display: flex; gap: 8px;">
+    <div style="display:flex; gap:8px;">
       <button class="icon-btn" onclick="loadOrders()" title="Aggiorna"><i class="bi bi-arrow-clockwise"></i></button>
       <button class="icon-btn danger" onclick="confirmClear()" title="Svuota database"><i class="bi bi-trash"></i></button>
     </div>
   </div>
 
-  <button class="debug-toggle" onclick="toggleDebug()">
-    <i class="bi bi-bug"></i> Mostra/Nascondi Debug Console
-  </button>
-
+  <button class="debug-toggle" onclick="toggleDebug()"><i class="bi bi-bug"></i> Debug Console</button>
   <div class="debug-panel" id="debugPanel"></div>
 
   <div class="loading-state" id="loadingState">
     <div class="spinner-big"></div>
-    <h3 id="loadingTitle">Elaborazione in corso...</h3>
-    <div class="status" id="loadingStatus">Inizializzazione...</div>
+    <h3 id="loadingTitle">Elaborazione...</h3>
+    <div class="status" id="loadingStatus"></div>
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
   </div>
 
@@ -219,7 +173,6 @@ body.stale .stale-banner { display: block; }
   </div>
 
   <div class="stats-row" id="stats"></div>
-
   <div id="ordersList"></div>
 </div>
 
@@ -232,819 +185,511 @@ body.stale .stale-banner { display: block; }
 </div>
 
 <script>
-// ============ DEBUG LOGGER ============
-const debugPanel = document.getElementById('debugPanel');
-function debug(msg, type = 'info') {
-  const time = new Date().toLocaleTimeString('it-IT', {hour12: false});
+// ============ DEBUG ============
+function debug(msg, type='info') {
+  const p = document.getElementById('debugPanel');
+  const t = new Date().toLocaleTimeString('it-IT',{hour12:false});
   const el = document.createElement('div');
-  el.className = `log ${type}`;
-  el.textContent = `[${time}] ${msg}`;
-  debugPanel.appendChild(el);
-  debugPanel.scrollTop = debugPanel.scrollHeight;
-  console.log(`[${type.toUpperCase()}] ${msg}`);
+  el.className = 'log ' + type;
+  el.textContent = `[${t}] ${msg}`;
+  p.appendChild(el);
+  p.scrollTop = p.scrollHeight;
+  console.log(`[${type}] ${msg}`);
 }
-function toggleDebug() {
-  debugPanel.classList.toggle('active');
-}
-// Mostra debug di default all'avvio
-debugPanel.classList.add('active');
+function toggleDebug(){ document.getElementById('debugPanel').classList.toggle('active'); }
+document.getElementById('debugPanel').classList.add('active');
 
-// ============ LOADING STATE ============
-const loadingState = document.getElementById('loadingState');
-const loadingTitle = document.getElementById('loadingTitle');
-const loadingStatus = document.getElementById('loadingStatus');
-const progressFill = document.getElementById('progressFill');
-
-function showLoading(title, status = '', progress = 0) {
-  loadingTitle.textContent = title;
-  loadingStatus.textContent = status;
-  progressFill.style.width = progress + '%';
-  loadingState.classList.add('active');
-  debug(`⏳ ${title}: ${status}`, 'step');
+function showLoading(title, status='', pct=0){
+  document.getElementById('loadingTitle').textContent = title;
+  document.getElementById('loadingStatus').textContent = status;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('loadingState').classList.add('active');
 }
-function updateLoading(status, progress) {
-  loadingStatus.textContent = status;
-  progressFill.style.width = progress + '%';
-  debug(`→ ${status}`, 'info');
+function updateLoading(status, pct){
+  document.getElementById('loadingStatus').textContent = status;
+  document.getElementById('progressFill').style.width = pct + '%';
 }
-function hideLoading() {
-  loadingState.classList.remove('active');
-  debug(`✓ Completato`, 'success');
-}
+function hideLoading(){ document.getElementById('loadingState').classList.remove('active'); }
 
-// ============ INIT ============
-debug('🚀 Avvio applicazione...', 'step');
-debug(`URL: ${window.location.href}`, 'info');
-debug(`User Agent: ${navigator.userAgent}`, 'info');
+debug('Avvio applicazione...', 'step');
 
+// ============ SUPABASE ============
 const SUPABASE_URL = 'https://emaiswhuznyqkzzzelvh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_7xF7dZXBDOahRmdanK-cFw_jx0sO0Cw';
-debug(`Supabase URL: ${SUPABASE_URL}`, 'info');
-
 let supabase = null;
+try {
+  if (typeof window.supabase === 'undefined') throw new Error('Libreria Supabase non caricata');
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  debug('Supabase connesso', 'success');
+} catch(e){
+  debug('ERRORE Supabase: ' + e.message, 'error');
+}
+
 let allOrders = [];
 let pendingImport = null;
 const currentYear = new Date().getFullYear();
-debug(`Anno corrente: ${currentYear}`, 'info');
+debug('Anno corrente: ' + currentYear, 'info');
 
-// Init Supabase con try/catch
-try {
-  debug('Inizializzazione Supabase...', 'info');
-  if (typeof window.supabase === 'undefined') {
-    throw new Error('Libreria Supabase non caricata (CDN bloccata?)');
-  }
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  debug('✓ Supabase inizializzato correttamente', 'success');
-} catch (e) {
-  debug('❌ ERRORE init Supabase: ' + e.message, 'error');
-  debug('Stack: ' + e.stack, 'error');
-  alert('ERRORE CRITICO:\n' + e.message + '\n\nControlla la console di debug (F12)');
-}
-
-// ============ CSV PARSER ROBUSTO ============
-// Gestisce CSV con record concatenati senza newline (blocchi di 11 campi)
-function parseCSV(text) {
-  debug(`Parsing CSV: ${text.length} caratteri`, 'info');
-  
-  // Normalizza line endings
-  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  
-  // Rimuovi BOM se presente
-  if (text.charCodeAt(0) === 0xFEFF) {
-    text = text.substring(1);
-    debug('Rimosso BOM', 'info');
-  }
-  
-  const allFields = [];
-  let field = '';
-  let inQuotes = false;
-  
-  // Parse tutti i campi, separati da virgole
-  for (let i = 0; i < text.length; i++) {
+// ============ PARSER CSV ROBUSTO ============
+function parseCSVFields(text){
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const fields = [];
+  let field = '', inQuotes = false;
+  for (let i=0; i<text.length; i++){
     const c = text[i];
-    if (c === '"') {
-      if (inQuotes && text[i+1] === '"') { field += '"'; i++; }
+    if (c === '"'){
+      if (inQuotes && text[i+1] === '"'){ field += '"'; i++; }
       else inQuotes = !inQuotes;
-    } else if (c === ',' && !inQuotes) {
-      allFields.push(field.trim());
+    } else if ((c === ',' || c === '\n' || c === '\r') && !inQuotes){
+      if (c === '\r' && text[i+1] === '\n') i++;
+      fields.push(field);
       field = '';
-    } else if ((c === '\n' || c === '\r') && !inQuotes) {
-      // Newline fuori dalle virgolette = fine campo
-      allFields.push(field.trim());
-      field = '';
-    } else if (c !== '\n' && c !== '\r') {
+    } else if (c !== '\r' && c !== '\n'){
+      field += c;
+    } else {
       field += c;
     }
   }
-  if (field.trim() || allFields.length > 0) {
-    allFields.push(field.trim());
-  }
-  
-  debug(`Campi totali estratti: ${allFields.length}`, 'info');
-  
-  // Dividi in righe da 11 campi ciascuna (struttura Danea)
-  const FIELDS_PER_RECORD = 11;
-  const rows = [];
-  
-  for (let i = 0; i < allFields.length; i += FIELDS_PER_RECORD) {
-    const row = allFields.slice(i, i + FIELDS_PER_RECORD);
-    // Salta righe completamente vuote
-    if (row.some(f => f && f.trim())) {
-      rows.push(row);
-    }
-  }
-  
-  debug(`Record estratti: ${rows.length}`, 'success');
-  
-  // Log primi 3 record per verifica
-  if (rows.length > 0) {
-    debug('Primo record: ' + JSON.stringify(rows[0]), 'info');
-    if (rows.length > 1) debug('Secondo record: ' + JSON.stringify(rows[1]), 'info');
-  }
-  
-  return rows;
+  fields.push(field);
+  return fields;
 }
 
-function parseItalianDate(s) {
-  if (!s) return null;
+function isItalianDate(s){
+  if (!s) return false;
   s = s.trim();
   const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-  if (!m) return null;
-  let y = parseInt(m[3]);
-  if (y < 100) y += 2000;
-  const d = new Date(y, parseInt(m[2])-1, parseInt(m[1]));
-  if (isNaN(d.getTime())) return null;
-  return d;
+  if (!m) return false;
+  const d = +m[1], mo = +m[2];
+  if (mo < 1 || mo > 12) return false;
+  if (d < 1 || d > 31) return false;
+  return true;
+}
+function toDate(s){
+  const m = s.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  let y = +m[3]; if (y < 100) y += 2000;
+  return new Date(y, +m[2]-1, +m[1]);
+}
+function isStato(s){
+  if (!s) return false;
+  s = s.toLowerCase();
+  return s.includes('annullato') || s.includes('confermato') ||
+         s.includes('confermare') || s.includes('concluso');
+}
+
+// Rileva l'inizio di ogni ordine: [vuoto][data][...][...][stato]
+function extractRecords(fields){
+  const starts = [];
+  for (let i=0; i+4 < fields.length; i++){
+    if (fields[i].trim() === '' && isItalianDate(fields[i+1]) && isStato(fields[i+4])){
+      starts.push(i);
+    }
+  }
+  const records = [];
+  for (let k=0; k<starts.length; k++){
+    const start = starts[k];
+    const end = (k+1 < starts.length) ? starts[k+1] : fields.length;
+    records.push(fields.slice(start, end));
+  }
+  return records;
 }
 
 // ============ FILTRI ============
-function classifyRow(row, rowIndex) {
-  // Struttura Danea:
-  // [0] vuoto/rif.fattura [1] data ordine [2] operatore [3] numero ordine [4] stato
-  // [5] GRAFICO [6] data evasione [7] cliente [8] note [9] prezzo [10] settore
-  
-  if (row.length < 11) {
-    return { valid: false, reason: 'Riga incompleta (' + row.length + ' campi)' };
-  }
+const VALID_GRAFICI = ['', 'ALBERTO', 'ALBERTO - COMPLETATO', 'PIETRO', 'PIETRO - COMPLETATO', 'COMPLETATO', 'SAMUELE', 'SAMUELE - COMPLETATO'];
+function norm(s){ return (s||'').toUpperCase().replace(/\s+/g,' ').trim(); }
 
-  const dataOrdineStr = (row[1] || '').trim();
-  const numero = (row[3] || '').trim();
-  const stato = (row[4] || '').trim();
-  const grafico = (row[5] || '').trim();
-  const cliente = (row[7] || '').trim();
-  const note = (row[8] || '').trim();
-  const settore = (row[10] || '').trim();
+function classifyRow(rec){
+  // rec[0]=vuoto rec[1]=data rec[2]=operatore rec[3]=numero rec[4]=stato
+  // rec[5]=grafico rec[6]=evasione rec[7]=cliente rec[8]=note rec[9]=prezzo rec[10]=settore
+  if (rec.length < 8) return {valid:false, reason:'Riga troppo corta'};
 
-  // Salta righe senza data ordine valida
-  const dataOrdine = parseItalianDate(dataOrdineStr);
-  if (!dataOrdine) {
-    return { valid: false, reason: `Data non valida: "${dataOrdineStr}"` };
-  }
+  const dataStr = (rec[1]||'').trim();
+  const numero  = (rec[3]||'').trim();
+  const stato   = (rec[4]||'').trim();
+  const grafico = norm(rec[5]);
+  const cliente = (rec[7]||'').trim();
+  const settore = (rec[10]||'').trim();
 
-  const statoLower = stato.toLowerCase();
-  const graficoUpper = grafico.toUpperCase().replace(/\s+/g, ' ').trim();
-  const noteUpper = note.toUpperCase();
+  if (!isItalianDate(dataStr)) return {valid:false, reason:'Data non valida'};
+  const data = toDate(dataStr);
+  const statoL = stato.toLowerCase();
 
-  // 1. Escludi Annullati
-  if (statoLower.includes('annullato')) {
-    return { valid: false, reason: 'Annullato' };
-  }
+  if (statoL.includes('annullato')) return {valid:false, reason:'Annullato'};
+  if (!statoL.includes('confermato') && !statoL.includes('confermare'))
+    return {valid:false, reason:'Stato: ' + (stato||'n/d')};
+  if (grafico === 'SOSPESO') return {valid:false, reason:'Sospeso'};
+  if (numero.toUpperCase().includes('/B')) return {valid:false, reason:'Numero /B'};
+  if (!VALID_GRAFICI.includes(grafico)) return {valid:false, reason:'Grafico: ' + (rec[5]||'n/d')};
 
-  // 2. Solo Da confermare o Confermato
-  if (!statoLower.includes('da confermare') && !statoLower.includes('confermato')) {
-    return { valid: false, reason: `Stato: "${stato || 'n/d'}"` };
-  }
+  const year = data.getFullYear();
+  if (year < currentYear-1 || year > currentYear+1)
+    return {valid:false, reason:'Anno ' + year};
 
-  // 3. Escludi SOSPESO
-  if (graficoUpper === 'SOSPESO' || 
-      statoLower.includes('sospeso') || 
-      noteUpper.includes('SOSPESO')) {
-    return { valid: false, reason: 'Sospeso' };
-  }
-
-  // 4. Escludi /B
-  if (numero.toUpperCase().includes('/B')) {
-    return { valid: false, reason: 'Numero /B' };
-  }
-
-  // 5. Escludi SALVO G. - COMPLETATO e FABRIS
-  if (graficoUpper.includes('SALVO G.') || graficoUpper.includes('FABRIS')) {
-    return { valid: false, reason: `Grafico escluso: "${grafico}"` };
-  }
-
-  // 6. Grafico valido (o vuoto = da smistare)
-  const graficiValidi = [
-    'ALBERTO', 'ALBERTO - COMPLETATO', 
-    'PIETRO', 'PIETRO - COMPLETATO', 
-    'COMPLETATO', 
-    'SAMUELE', 'SAMUELE - COMPLETATO'
-  ];
-  if (graficoUpper && !graficiValidi.includes(graficoUpper)) {
-    return { valid: false, reason: `Grafico non valido: "${grafico}"` };
-  }
-
-  // 7. Filtro anno (precedente, attuale, successivo)
-  const year = dataOrdine.getFullYear();
-  if (year < currentYear - 1 || year > currentYear + 1) {
-    return { valid: false, reason: `Anno ${year} (fuori range)` };
-  }
-
-  return {
-    valid: true,
-    data: {
-      numero_ordine: numero,
-      anno_ordine: year,
-      cliente: cliente || 'Cliente n/d',
-      data_ordine: dataOrdine.toISOString().split('T')[0],
-      grafico: grafico,
-      stato: stato,
-      settore: settore
-    }
-  };
+  return {valid:true, data:{
+    numero_ordine: numero,
+    anno_ordine: year,
+    cliente: cliente || 'Cliente n/d',
+    data_ordine: data.toISOString().split('T')[0],
+    grafico: (rec[5]||'').trim(),
+    stato: stato,
+    settore: settore
+  }};
 }
 
-// ============ PROCESSAMENTO ============
-function processCSV(text) {
-  debug('═══ INIZIO PROCESSAMENTO CSV ═══', 'step');
-  const rows = parseCSV(text);
-  const valid = [];
-  const reasons = {};
-  let totalRows = 0;
-  let skipped = 0;
+function processCSV(text){
+  debug('═══ PROCESSAMENTO CSV ═══', 'step');
+  const fields = parseCSVFields(text);
+  debug('Campi totali: ' + fields.length, 'info');
+  const records = extractRecords(fields);
+  debug('Ordini rilevati: ' + records.length, 'info');
+  if (records.length > 0) debug('Primo ordine: ' + JSON.stringify(records[0].slice(0,8)), 'info');
 
-  debug(`Analisi di ${rows.length} record...`, 'info');
-
-  rows.forEach((row, idx) => {
-    // Salta header se presente
-    if (row[1] && /data/i.test(row[1]) && row[3] && /numero|ordine/i.test(row[3])) {
-      debug(`Riga ${idx}: HEADER saltato`, 'info');
-      return;
-    }
-    
-    totalRows++;
-    const result = classifyRow(row, idx);
-    
-    if (result.valid) {
-      valid.push(result.data);
-    } else {
-      skipped++;
-      reasons[result.reason] = (reasons[result.reason] || 0) + 1;
-      if (skipped <= 5) {
-        debug(`Riga ${idx} scartata: ${result.reason}`, 'warning');
-      }
-    }
+  const valid = [], reasons = {};
+  records.forEach(rec => {
+    const r = classifyRow(rec);
+    if (r.valid) valid.push(r.data);
+    else reasons[r.reason] = (reasons[r.reason]||0)+1;
   });
 
-  debug(`Totale analizzati: ${totalRows}`, 'info');
-  debug(`Validi: ${valid.length}`, 'success');
-  debug(`Scartati: ${skipped}`, skipped > 0 ? 'warning' : 'info');
-
-  // Deduplica per numero+anno, tieni anno corrente se duplicati
-  const unique = new Map();
+  // dedup
+  const map = new Map();
   valid.forEach(o => {
-    const key = `${o.numero_ordine}_${o.anno_ordine}`;
-    if (!unique.has(key) || o.anno_ordine === currentYear) {
-      unique.set(key, o);
-    }
+    const key = o.numero_ordine + '_' + o.anno_ordine;
+    if (!map.has(key) || o.anno_ordine === currentYear) map.set(key, o);
   });
 
-  const result = {
-    total: totalRows,
-    valid: Array.from(unique.values()),
-    validCount: unique.size,
-    skipCount: skipped,
+  debug('Ordini validi: ' + map.size, 'success');
+  debug('Scartati: ' + (records.length - valid.length), records.length>valid.length?'warning':'info');
+  return {
+    total: records.length,
+    valid: Array.from(map.values()),
+    validCount: map.size,
+    skipCount: records.length - valid.length,
     reasons
   };
-  
-  debug(`Ordini unici finali: ${result.validCount}`, 'success');
-  debug('═══ FINE PROCESSAMENTO CSV ═══', 'step');
-  
-  return result;
 }
 
-// ============ DRAG & DROP ============
+// ============ FILE INPUT ============
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('csvFile');
-
-dropzone.addEventListener('click', () => {
-  debug('Click su dropzone', 'info');
-  fileInput.click();
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault(); dropzone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
-
-dropzone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  dropzone.classList.add('dragover');
-});
-dropzone.addEventListener('dragleave', () => {
-  dropzone.classList.remove('dragover');
-});
-dropzone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropzone.classList.remove('dragover');
-  debug('File trascinato', 'info');
-  if (e.dataTransfer.files[0]) {
-    handleFile(e.dataTransfer.files[0]);
-  }
-});
-
-fileInput.addEventListener('change', (e) => {
-  debug('File selezionato da input', 'info');
-  if (e.target.files[0]) {
-    handleFile(e.target.files[0]);
-  }
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
   e.target.value = '';
 });
 
-async function handleFile(file) {
-  debug(`═══ HANDLE FILE ═══`, 'step');
-  debug(`Nome: ${file.name}`, 'info');
-  debug(`Dimensione: ${file.size} bytes`, 'info');
-  debug(`Tipo: ${file.type || 'non specificato'}`, 'info');
-  
-  if (!file.name.toLowerCase().endsWith('.csv')) {
-    debug('❌ File non CSV', 'error');
-    alert('Seleziona un file CSV');
-    return;
-  }
-  
-  showLoading('Lettura file...', 'Caricamento del CSV in memoria', 10);
-  
+async function handleFile(file){
+  debug('File: ' + file.name + ' (' + file.size + ' byte)', 'step');
+  if (!file.name.toLowerCase().endsWith('.csv')){ alert('Seleziona un file CSV'); return; }
+
+  showLoading('Lettura file...', '', 10);
   try {
-    // Usa Promise per FileReader
-    const text = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        debug(`File letto: ${e.target.result.length} caratteri`, 'success');
-        resolve(e.target.result);
-      };
-      reader.onerror = () => reject(new Error('Errore lettura file'));
-      reader.onprogress = (e) => {
-        if (e.lengthComputable) {
-          const pct = Math.round((e.loaded / e.total) * 100);
-          updateLoading(`Lettura file... ${pct}%`, 'Caricamento in corso', 10 + (pct * 0.2));
-        }
-      };
-      debug('Avvio FileReader...', 'info');
-      reader.readAsText(file, 'UTF-8');
-    });
-    
-    updateLoading('Analisi CSV...', 'Parsing dei campi e dei record', 40);
-    await new Promise(r => setTimeout(r, 50)); // Yield per UI
-    
+    const text = await file.text();
+    debug('File letto: ' + text.length + ' caratteri', 'success');
+    updateLoading('Analisi e filtraggio...', 50);
+    await new Promise(r => setTimeout(r, 30));
+
     const result = processCSV(text);
-    
-    if (result.validCount === 0) {
-      debug('⚠️ Nessun ordine valido trovato', 'warning');
-      updateLoading('Nessun ordine valido', '', 100);
-      setTimeout(() => {
-        hideLoading();
-        alert('Nessun ordine valido trovato nel CSV.\n\nControlla la console di debug per vedere i motivi di scarto.');
-      }, 500);
+    if (result.validCount === 0){
+      hideLoading();
+      alert('Nessun ordine valido trovato.\nControlla la Debug Console per i motivi di scarto.');
       return;
     }
-    
-    updateLoading('Preparazione anteprima...', `${result.validCount} ordini pronti`, 90);
-    await new Promise(r => setTimeout(r, 50));
-    
     pendingImport = result;
     showPreview(result);
-    
     hideLoading();
-    debug(`✓ Anteprima mostrata con ${result.validCount} ordini`, 'success');
-    
-  } catch (err) {
-    debug('❌ ERRORE in handleFile: ' + err.message, 'error');
-    debug('Stack: ' + err.stack, 'error');
+    debug('Anteprima pronta: ' + result.validCount + ' ordini', 'success');
+  } catch(err){
+    debug('ERRORE: ' + err.message, 'error');
     hideLoading();
-    alert('Errore elaborazione file:\n' + err.message);
+    alert('Errore: ' + err.message);
   }
 }
 
-function showPreview(result) {
-  debug('Mostra anteprima', 'info');
+function showPreview(r){
   document.getElementById('previewStats').innerHTML = `
-    <div class="stat-box">
-      <span class="num total">${result.total}</span>
-      <span class="lbl">Righe lette</span>
-    </div>
-    <div class="stat-box">
-      <span class="num ok">${result.validCount}</span>
-      <span class="lbl">Da importare</span>
-    </div>
-    <div class="stat-box">
-      <span class="num skip">${result.skipCount}</span>
-      <span class="lbl">Scartati</span>
-    </div>
-  `;
-  
-  const reasons = Object.entries(result.reasons).sort((a,b) => b[1]-a[1]);
-  const reasonsEl = document.getElementById('previewReasons');
-  if (reasons.length === 0) {
-    reasonsEl.innerHTML = '<div class="reason"><span>🎉 Nessun ordine scartato</span></div>';
-  } else {
-    reasonsEl.innerHTML = reasons.map(([reason, count]) => 
-      `<div class="reason"><span>${escapeHtml(reason)}</span><span class="count">${count}</span></div>`
-    ).join('');
-  }
-  
+    <div class="stat-box"><span class="num total">${r.total}</span><span class="lbl">Ordini letti</span></div>
+    <div class="stat-box"><span class="num ok">${r.validCount}</span><span class="lbl">Da importare</span></div>
+    <div class="stat-box"><span class="num skip">${r.skipCount}</span><span class="lbl">Scartati</span></div>`;
+  const reasons = Object.entries(r.reasons).sort((a,b)=>b[1]-a[1]);
+  const el = document.getElementById('previewReasons');
+  el.innerHTML = reasons.length === 0
+    ? '<div class="reason"><span>Nessuno scarto 🎉</span></div>'
+    : reasons.map(([k,v])=>`<div class="reason"><span>${escapeHtml(k)}</span><span class="count">${v}</span></div>`).join('');
   document.getElementById('preview').classList.add('active');
 }
-
-function cancelPreview() {
-  debug('Anteprima annullata', 'info');
+function cancelPreview(){
   document.getElementById('preview').classList.remove('active');
   pendingImport = null;
 }
 
-async function doImport() {
+// ============ IMPORT ============
+async function doImport(){
   if (!pendingImport) return;
-  debug('═══ AVVIO IMPORT ═══', 'step');
-  
-  if (pendingImport.valid.length === 0) {
-    alert('Nessun ordine valido da importare');
-    cancelPreview();
-    return;
-  }
-  
-  if (!supabase) {
-    debug('❌ Supabase non inizializzato', 'error');
-    alert('Errore: Supabase non disponibile');
-    return;
-  }
-  
+  if (!supabase){ alert('Supabase non disponibile'); return; }
   const btn = document.getElementById('importBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-big" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;"></span> Verifica...';
-  
-  showLoading('Verifica conflitti...', 'Controllo ordini già presenti nel database', 10);
-  
+  btn.disabled = true; btn.innerHTML = 'Verifica...';
+  showLoading('Verifica dati esistenti...', '', 10);
+  debug('Verifica conflitti...', 'step');
+
   try {
-    debug(`Verifica conflitti per ${pendingImport.valid.length} ordini...`, 'info');
-    
-    const numeri = pendingImport.valid.map(o => o.numero_ordine);
-    debug(`Query Supabase: SELECT ordini con numeri in (${numeri.slice(0,3).join(', ')}...)`, 'info');
-    
-    const { data: existing, error: qError } = await supabase
+    const { data: existing, error } = await supabase
       .from('ordini')
-      .select('numero_ordine, anno_ordine, note_interne, descrizione_breve, data_evasione_grafica')
-      .in('numero_ordine', numeri);
-    
-    if (qError) {
-      debug('❌ Errore query: ' + qError.message, 'error');
-      throw qError;
-    }
-    
-    debug(`Trovati ${existing?.length || 0} ordini esistenti`, 'info');
-    
-    const existingMap = {};
-    (existing || []).forEach(o => {
-      existingMap[`${o.numero_ordine}_${o.anno_ordine}`] = o;
+      .select('numero_ordine, anno_ordine, note_interne, descrizione_breve, data_evasione_grafica');
+    if (error) throw error;
+
+    const customMap = {};
+    (existing||[]).forEach(o => {
+      if (o.note_interne || o.descrizione_breve || o.data_evasione_grafica){
+        customMap[o.numero_ordine + '_' + o.anno_ordine] = {
+          note_interne: o.note_interne||'',
+          descrizione_breve: o.descrizione_breve||'',
+          data_evasione_grafica: o.data_evasione_grafica
+        };
+      }
     });
-    
-    const hasCustomData = pendingImport.valid.some(o => {
-      const ex = existingMap[`${o.numero_ordine}_${o.anno_ordine}`];
-      return ex && (ex.note_interne || ex.descrizione_breve || ex.data_evasione_grafica);
-    });
-    
-    updateLoading('Verifica completata', hasCustomData ? 'Dati custom trovati' : 'Nessun conflitto', 100);
-    
-    if (hasCustomData) {
-      debug('⚠️ Trovati dati custom, chiedo conferma', 'warning');
+    const hasCustom = pendingImport.valid.some(o => customMap[o.numero_ordine+'_'+o.anno_ordine]);
+    debug('Ordini con dati personalizzati: ' + Object.keys(customMap).length, 'info');
+    hideLoading();
+
+    if (hasCustom){
       showModal(
         '⚠️ Dati esistenti trovati',
-        'Alcuni ordini hanno note, descrizioni o date evasione inserite manualmente. Come vuoi procedere?',
+        'Alcuni ordini hanno note, descrizioni o date evasione salvate. Vuoi mantenerle o sovrascrivere tutto?',
         [
-          { label: '🛡️ Mantieni dati esistenti', class: 'btn-ghost', action: () => importToDB(false) },
-          { label: '🔄 Sovrascrivi tutto', class: 'btn-danger', action: () => importToDB(true) },
-          { label: 'Annulla', class: 'btn-ghost', action: cancelPreview }
+          {label:'🛡️ Mantieni i dati salvati', class:'btn-primary', action:()=>runImport(pendingImport.valid, customMap)},
+          {label:'🔄 Sovrascrivi tutto', class:'btn-danger', action:()=>runImport(pendingImport.valid, null)},
+          {label:'Annulla', class:'btn-ghost', action:cancelPreview}
         ]
       );
     } else {
-      importToDB(true);
+      runImport(pendingImport.valid, null);
     }
-  } catch (err) {
-    debug('❌ ERRORE in doImport: ' + err.message, 'error');
+  } catch(err){
+    debug('ERRORE: ' + err.message, 'error');
     hideLoading();
     alert('Errore: ' + err.message);
-    btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-cloud-arrow-up"></i> Importa nel database';
+    btn.disabled = false; btn.innerHTML = '<i class="bi bi-cloud-arrow-up"></i> Importa nel database';
   }
 }
 
-async function importToDB(overwrite) {
-  debug(`Import DB (overwrite=${overwrite})`, 'step');
+async function runImport(orders, customMap){
   document.getElementById('preview').classList.remove('active');
-  
-  const orders = pendingImport.valid;
-  showLoading('Importazione...', `0/${orders.length} ordini`, 0);
-  
+  showLoading('Importazione...', 'Cancellazione dati precedenti', 5);
+  debug('Import di ' + orders.length + ' ordini (keep=' + !!customMap + ')', 'step');
+
   try {
-    if (overwrite) {
-      const BATCH = 50;
-      let inserted = 0;
-      let errors = 0;
-      
-      for (let i = 0; i < orders.length; i += BATCH) {
-        const batch = orders.slice(i, i + BATCH);
-        const pct = Math.round((i / orders.length) * 100);
-        updateLoading(
-          'Importazione batch...', 
-          `${inserted}/${orders.length} inseriti (${pct}%)`,
-          pct
-        );
-        
-        debug(`Batch ${Math.floor(i/BATCH) + 1}: ${batch.length} ordini`, 'info');
-        
-        const { data, error } = await supabase
-          .from('ordini')
-          .upsert(batch, { onConflict: 'numero_ordine,anno_ordine' })
-          .select();
-        
-        if (error) {
-          debug(`❌ Errore batch: ${error.message}`, 'error');
-          errors++;
-        } else {
-          inserted += (data || []).length;
-          debug(`✓ Batch completato: ${data?.length || 0} ordini`, 'success');
-        }
-        
-        // Yield per UI
-        await new Promise(r => setTimeout(r, 10));
-      }
-      
-      updateLoading('Aggiornamento timestamp...', '', 95);
-      await supabase.from('meta').update({ ultima_importazione: new Date().toISOString() }).eq('id', 1);
-      
-      debug(`✓ Import completato: ${inserted} ordini, ${errors} errori`, 'success');
-      updateLoading(`✓ ${inserted} ordini importati`, errors > 0 ? `${errors} errori` : '', 100);
+    const { error: delErr } = await supabase.from('ordini').delete().neq('id', -1);
+    if (delErr) throw delErr;
+    debug('Vecchi dati cancellati', 'success');
+    updateLoading('Inserimento ordini...', 20);
+
+    const BATCH = 100;
+    let inserted = 0;
+    for (let i=0; i<orders.length; i+=BATCH){
+      const batch = orders.slice(i, i+BATCH);
+      const { error } = await supabase.from('ordini').insert(batch);
+      if (error){ debug('Errore batch: ' + error.message, 'error'); }
+      else inserted += batch.length;
+      updateLoading('Inserimento ' + inserted + '/' + orders.length + '...', 20 + (i/orders.length)*60);
+      await new Promise(r=>setTimeout(r,10));
     }
-    
-    cancelPreview();
-    await new Promise(r => setTimeout(r, 300));
+    debug('Inseriti: ' + inserted, 'success');
+
+    // Riapplica dati personalizzati
+    if (customMap){
+      updateLoading('Ripristino dati salvati...', 85);
+      let restored = 0;
+      const { data: newRows, error: selErr } = await supabase
+        .from('ordini').select('id, numero_ordine, anno_ordine');
+      if (!selErr){
+        for (const row of (newRows||[])){
+          const c = customMap[row.numero_ordine + '_' + row.anno_ordine];
+          if (c){
+            await supabase.from('ordini').update(c).eq('id', row.id);
+            restored++;
+          }
+        }
+        debug('Ripristinati: ' + restored, 'success');
+      }
+    }
+
+    await supabase.from('meta').update({ultima_importazione:new Date().toISOString()}).eq('id',1);
+    updateLoading('Completato ✓', 100);
     hideLoading();
-    await loadOrders();
-  } catch (err) {
-    debug('❌ ERRORE in importToDB: ' + err.message, 'error');
+    cancelPreview();
+    loadOrders();
+  } catch(err){
+    debug('ERRORE import: ' + err.message, 'error');
     hideLoading();
     alert('Errore import: ' + err.message);
   }
 }
 
-// ============ CARICAMENTO ORDINI ============
-async function loadOrders() {
-  debug('═══ CARICAMENTO ORDINI ═══', 'step');
+// ============ LOAD ============
+async function loadOrders(){
+  debug('Caricamento ordini...', 'step');
   const list = document.getElementById('ordersList');
-  list.innerHTML = '<div class="empty"><i class="bi bi-hourglass-split"></i>Caricamento ordini...</div>';
-  
-  if (!supabase) {
-    debug('❌ Supabase non disponibile', 'error');
-    list.innerHTML = `<div class="empty"><i class="bi bi-exclamation-triangle"></i>Supabase non inizializzato</div>`;
-    return;
-  }
-  
+  list.innerHTML = '<div class="empty"><i class="bi bi-hourglass-split"></i>Caricamento...</div>';
+  if (!supabase){ list.innerHTML = '<div class="empty">Supabase non disponibile</div>'; return; }
   try {
-    debug('Query SELECT * FROM ordini...', 'info');
     const { data, error } = await supabase
-      .from('ordini')
-      .select('*')
-      .order('data_evasione_grafica', { ascending: true, nullsFirst: true })
-      .order('data_ordine', { ascending: false });
-    
-    if (error) {
-      debug('❌ Errore query: ' + error.message, 'error');
-      throw error;
-    }
-    
+      .from('ordini').select('*')
+      .order('data_evasione_grafica', {ascending:true, nullsFirst:true})
+      .order('data_ordine', {ascending:false});
+    if (error) throw error;
     allOrders = data || [];
-    debug(`✓ Caricati ${allOrders.length} ordini`, 'success');
+    debug('Caricati ' + allOrders.length + ' ordini', 'success');
     renderOrders();
-    await loadMeta();
-  } catch (err) {
-    debug('❌ ERRORE loadOrders: ' + err.message, 'error');
-    list.innerHTML = `<div class="empty"><i class="bi bi-exclamation-triangle"></i>Errore: ${err.message}</div>`;
+    loadMeta();
+  } catch(err){
+    debug('ERRORE: ' + err.message, 'error');
+    list.innerHTML = '<div class="empty"><i class="bi bi-exclamation-triangle"></i>Errore: ' + err.message + '</div>';
   }
 }
-
-async function loadMeta() {
+async function loadMeta(){
   try {
-    debug('Caricamento meta (timestamp)...', 'info');
-    const { data } = await supabase.from('meta').select('ultima_importazione').eq('id', 1).maybeSingle();
+    const { data } = await supabase.from('meta').select('ultima_importazione').eq('id',1).maybeSingle();
     const el = document.getElementById('lastUpdate');
-    
-    if (data && data.ultima_importazione) {
-      const date = new Date(data.ultima_importazione);
-      const diff = (Date.now() - date.getTime()) / (1000 * 60 * 60);
-      const formatted = date.toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-      el.innerHTML = `<i class="bi bi-clock"></i> Aggiornato ${formatted}`;
+    if (data && data.ultima_importazione){
+      const d = new Date(data.ultima_importazione);
+      const diff = (Date.now()-d.getTime())/3600000;
+      el.innerHTML = '<i class="bi bi-clock"></i> Aggiornato ' + d.toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
       document.body.classList.toggle('stale', diff > 24);
-      debug(`Ultimo aggiornamento: ${formatted} (${diff.toFixed(1)}h fa)`, 'info');
-    } else {
-      el.innerHTML = '<i class="bi bi-clock"></i> Nessun aggiornamento';
-      debug('Nessun timestamp trovato', 'warning');
-    }
-  } catch (err) {
-    debug('Errore loadMeta: ' + err.message, 'error');
-  }
+    } else el.textContent = 'Nessun aggiornamento';
+  } catch(e){ debug('Errore meta: '+e.message,'error'); }
 }
 
-// ============ RENDERING ============
-function getGraficoInfo(grafico) {
-  const g = (grafico || '').toUpperCase().trim();
-  if (!g) return { name: 'Da smistare', class: 'badge-smistare', icon: 'person-plus' };
-  if (g === 'COMPLETATO') return { name: 'Salvo G.', class: 'badge-salvo', icon: 'person-check' };
-  if (g.includes('ALBERTO')) return { name: 'Alberto', class: 'badge-alberto', icon: 'person' };
-  if (g.includes('PIETRO')) return { name: 'Pietro', class: 'badge-pietro', icon: 'person' };
-  if (g.includes('SAMUELE')) return { name: 'Samuele', class: 'badge-samuele', icon: 'person' };
-  return { name: g, class: 'badge-salvo', icon: 'person' };
+// ============ RENDER ============
+function getGraficoInfo(g){
+  g = norm(g);
+  if (!g) return {name:'Da smistare', class:'badge-smistare', icon:'person-plus'};
+  if (g === 'COMPLETATO') return {name:'Salvo G.', class:'badge-salvo', icon:'person-check'};
+  if (g.includes('ALBERTO')) return {name:'Alberto', class:'badge-alberto', icon:'person'};
+  if (g.includes('PIETRO')) return {name:'Pietro', class:'badge-pietro', icon:'person'};
+  if (g.includes('SAMUELE')) return {name:'Samuele', class:'badge-samuele', icon:'person'};
+  return {name:g, class:'badge-salvo', icon:'person'};
 }
-
-function renderCard(o) {
+function renderCard(o){
   const g = getGraficoInfo(o.grafico);
-  const settore = (o.settore || '').toUpperCase();
-  const hasEvasione = !!o.data_evasione_grafica;
-  const now = new Date();
-  const isOverdue = hasEvasione && new Date(o.data_evasione_grafica) < now;
-  let stateClass = '';
-  if (!hasEvasione) stateClass = 'no-evade';
-  else if (isOverdue) stateClass = 'overdue';
-  
-  const settoreHighlight = ['PLOTTER', 'INSEGNE', 'FURGONE'].some(s => settore.includes(s));
-  const dataEvasioneVal = o.data_evasione_grafica ? new Date(o.data_evasione_grafica).toISOString().slice(0,16) : '';
-  const dataOrdine = new Date(o.data_ordine).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
-  
+  const hasEv = !!o.data_evasione_grafica;
+  const overdue = hasEv && new Date(o.data_evasione_grafica) < new Date();
+  const cls = !hasEv ? 'no-evade' : (overdue ? 'overdue' : '');
+  const evVal = o.data_evasione_grafica ? new Date(o.data_evasione_grafica).toISOString().slice(0,16) : '';
+  const dOrd = o.data_ordine ? new Date(o.data_ordine).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) : '';
   return `
-    <div class="card ${stateClass}" data-id="${o.id}">
+    <div class="card ${cls}">
       <div class="card-head">
         <div>
-          <div class="order-num">
-            <i class="bi bi-hash"></i>
-            ${escapeHtml(o.numero_ordine)}
-            <span class="tag${settoreHighlight ? ' highlight' : ''}">${escapeHtml(o.settore || '')}</span>
+          <div class="order-num"><i class="bi bi-hash"></i>${escapeHtml(o.numero_ordine)}
+            ${o.settore ? `<span class="tag">${escapeHtml(o.settore)}</span>` : ''}
           </div>
-          <div class="order-date"><i class="bi bi-calendar3"></i> ${dataOrdine}</div>
-          <div class="cliente">${escapeHtml(o.cliente || 'Cliente n/d')}</div>
-          ${o.descrizione_breve 
-            ? `<div class="desc">${escapeHtml(o.descrizione_breve)}</div>`
-            : `<div class="desc placeholder">Nessuna descrizione</div>`
-          }
+          <div class="order-date"><i class="bi bi-calendar3"></i> ${dOrd}</div>
+          <div class="cliente">${escapeHtml(o.cliente||'Cliente n/d')}</div>
+          ${o.descrizione_breve ? `<div class="desc">${escapeHtml(o.descrizione_breve)}</div>` : `<div class="desc placeholder">Nessuna descrizione</div>`}
         </div>
-        <span class="badge ${g.class}">
-          <i class="bi bi-${g.icon}"></i>
-          ${g.name}
-        </span>
+        <span class="badge ${g.class}"><i class="bi bi-${g.icon}"></i>${g.name}</span>
       </div>
-      
       <div class="fields">
-        <div class="field">
-          <label><i class="bi bi-clock-history"></i> Evasione</label>
-          <input type="datetime-local" id="evade_${o.id}" value="${dataEvasioneVal}">
-        </div>
-        <div class="field">
-          <label><i class="bi bi-card-text"></i> Descrizione</label>
-          <textarea id="desc_${o.id}" placeholder="Breve descrizione visibile...">${escapeHtml(o.descrizione_breve || '')}</textarea>
-        </div>
-        <div class="field">
-          <label><i class="bi bi-sticky"></i> Note</label>
-          <textarea id="note_${o.id}" placeholder="Note interne...">${escapeHtml(o.note_interne || '')}</textarea>
-        </div>
+        <div class="field"><label><i class="bi bi-clock-history"></i> Evasione</label>
+          <input type="datetime-local" id="evade_${o.id}" value="${evVal}"></div>
+        <div class="field"><label><i class="bi bi-card-text"></i> Descrizione</label>
+          <textarea id="desc_${o.id}">${escapeHtml(o.descrizione_breve||'')}</textarea></div>
+        <div class="field"><label><i class="bi bi-sticky"></i> Note</label>
+          <textarea id="note_${o.id}">${escapeHtml(o.note_interne||'')}</textarea></div>
         <button class="save-btn" onclick="saveOrder(${o.id})"><i class="bi bi-check-lg"></i> Salva</button>
       </div>
-    </div>
-  `;
+    </div>`;
 }
-
-function renderOrders() {
+function renderOrders(){
   const list = document.getElementById('ordersList');
-  const search = document.getElementById('searchInput').value.toLowerCase().trim();
-  
-  let visible = allOrders;
-  if (search) {
-    visible = visible.filter(o => 
-      (o.cliente || '').toLowerCase().includes(search) ||
-      (o.numero_ordine || '').toLowerCase().includes(search) ||
-      (o.descrizione_breve || '').toLowerCase().includes(search) ||
-      (o.note_interne || '').toLowerCase().includes(search)
-    );
-  }
-  
-  const stats = {
-    totale: visible.length,
-    daSmistare: visible.filter(o => !o.grafico).length,
-    alberto: visible.filter(o => (o.grafico || '').toUpperCase().includes('ALBERTO')).length,
-    pietro: visible.filter(o => (o.grafico || '').toUpperCase().includes('PIETRO')).length,
-    samuele: visible.filter(o => (o.grafico || '').toUpperCase().includes('SAMUELE')).length,
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  let vis = allOrders;
+  if (q) vis = vis.filter(o =>
+    (o.cliente||'').toLowerCase().includes(q) ||
+    (o.numero_ordine||'').toLowerCase().includes(q) ||
+    (o.descrizione_breve||'').toLowerCase().includes(q) ||
+    (o.note_interne||'').toLowerCase().includes(q));
+
+  const st = {
+    tot: vis.length,
+    smist: vis.filter(o=>!norm(o.grafico)).length,
+    alb: vis.filter(o=>norm(o.grafico).includes('ALBERTO')).length,
+    pie: vis.filter(o=>norm(o.grafico).includes('PIETRO')).length,
+    sam: vis.filter(o=>norm(o.grafico).includes('SAMUELE')).length
   };
-  
   document.getElementById('stats').innerHTML = `
-    <div class="s"><span class="n">${stats.totale}</span><span class="l">Totale</span></div>
-    <div class="s"><span class="n" style="color:#d97706">${stats.daSmistare}</span><span class="l">Da smistare</span></div>
-    <div class="s"><span class="n" style="color:#7c3aed">${stats.alberto}</span><span class="l">Alberto</span></div>
-    <div class="s"><span class="n" style="color:#0891b2">${stats.pietro}</span><span class="l">Pietro</span></div>
-    <div class="s"><span class="n" style="color:#059669">${stats.samuele}</span><span class="l">Samuele</span></div>
-  `;
-  
-  if (visible.length === 0) {
-    list.innerHTML = `
-      <div class="empty">
-        <i class="bi bi-inbox"></i>
-        ${search ? 'Nessun risultato' : 'Nessun ordine'}
-        ${search ? '' : '<br><small>Carica un CSV per iniziare</small>'}
-      </div>
-    `;
+    <div class="s"><span class="n">${st.tot}</span><span class="l">Totale</span></div>
+    <div class="s"><span class="n" style="color:#d97706">${st.smist}</span><span class="l">Da smistare</span></div>
+    <div class="s"><span class="n" style="color:#7c3aed">${st.alb}</span><span class="l">Alberto</span></div>
+    <div class="s"><span class="n" style="color:#0891b2">${st.pie}</span><span class="l">Pietro</span></div>
+    <div class="s"><span class="n" style="color:#059669">${st.sam}</span><span class="l">Samuele</span></div>`;
+
+  if (vis.length === 0){
+    list.innerHTML = `<div class="empty"><i class="bi bi-inbox"></i>${q?'Nessun risultato':'Nessun ordine'}${q?'':'<br><small>Carica un CSV per iniziare</small>'}</div>`;
     return;
   }
-  
-  list.innerHTML = visible.map(o => renderCard(o)).join('');
+  list.innerHTML = vis.map(renderCard).join('');
 }
 
-// ============ SALVATAGGIO ============
-async function saveOrder(id) {
-  debug(`Salvataggio ordine ${id}`, 'info');
-  const evasione = document.getElementById(`evade_${id}`).value;
-  const desc = document.getElementById(`desc_${id}`).value;
-  const note = document.getElementById(`note_${id}`).value;
-  
+async function saveOrder(id){
+  const ev = document.getElementById('evade_'+id).value;
+  const de = document.getElementById('desc_'+id).value;
+  const no = document.getElementById('note_'+id).value;
   try {
-    const update = {
-      descrizione_breve: desc,
-      note_interne: note,
-      data_evasione_grafica: evasione ? new Date(evasione).toISOString() : null
-    };
-    
-    const { error } = await supabase.from('ordini').update(update).eq('id', id);
+    const { error } = await supabase.from('ordini').update({
+      descrizione_breve: de, note_interne: no,
+      data_evasione_grafica: ev ? new Date(ev).toISOString() : null
+    }).eq('id', id);
     if (error) throw error;
-    
-    const ord = allOrders.find(o => o.id === id);
-    if (ord) Object.assign(ord, update);
-    
-    debug(`✓ Ordine ${id} salvato`, 'success');
-    alert('Salvato');
+    const o = allOrders.find(x=>x.id===id);
+    if (o){ o.descrizione_breve=de; o.note_interne=no; o.data_evasione_grafica=ev?new Date(ev).toISOString():null; }
     renderOrders();
-  } catch (err) {
-    debug(`❌ Errore salvataggio: ${err.message}`, 'error');
-    alert('Errore: ' + err.message);
-  }
+    debug('Ordine ' + id + ' salvato', 'success');
+  } catch(e){ alert('Errore: '+e.message); debug('Errore save: '+e.message,'error'); }
 }
 
-// ============ SVUOTA ============
-function confirmClear() {
-  showModal(
-    '⚠️ Svuotare il database?',
-    'Tutti gli ordini verranno cancellati. Questa azione è irreversibile.',
-    [
-      { label: 'Sì, svuota tutto', class: 'btn-danger', action: doClear },
-      { label: 'Annulla', class: 'btn-ghost', action: () => {} }
-    ]
-  );
+function confirmClear(){
+  showModal('⚠️ Svuotare il database?', 'Tutti gli ordini verranno cancellati definitivamente.', [
+    {label:'Sì, svuota tutto', class:'btn-danger', action:doClear},
+    {label:'Annulla', class:'btn-ghost', action:()=>{}}
+  ]);
 }
-
-async function doClear() {
-  debug('Svuotamento database...', 'step');
+async function doClear(){
   try {
     const { error } = await supabase.from('ordini').delete().neq('id', -1);
     if (error) throw error;
-    
-    await supabase.from('meta').update({ ultima_importazione: new Date().toISOString() }).eq('id', 1);
-    debug('✓ Database svuotato', 'success');
-    alert('Database svuotato');
-    allOrders = [];
-    renderOrders();
-    loadMeta();
-  } catch (err) {
-    debug('❌ Errore svuotamento: ' + err.message, 'error');
-    alert('Errore: ' + err.message);
-  }
+    await supabase.from('meta').update({ultima_importazione:new Date().toISOString()}).eq('id',1);
+    allOrders = []; renderOrders(); loadMeta();
+    debug('Database svuotato', 'success');
+  } catch(e){ alert('Errore: '+e.message); }
 }
 
-// ============ UTILS ============
-function escapeHtml(s) {
+function escapeHtml(s){
   if (!s) return '';
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
-function showModal(title, text, buttons) {
+function showModal(title, text, buttons){
   document.getElementById('modalTitle').innerHTML = title;
   document.getElementById('modalText').innerHTML = text;
-  const btns = document.getElementById('modalButtons');
-  btns.innerHTML = '';
-  buttons.forEach(b => {
+  const b = document.getElementById('modalButtons');
+  b.innerHTML = '';
+  buttons.forEach(x=>{
     const btn = document.createElement('button');
-    btn.innerHTML = b.label;
-    btn.className = b.class;
-    btn.onclick = () => { 
-      document.getElementById('modal').classList.remove('active'); 
-      if (b.action) b.action(); 
-    };
-    btns.appendChild(btn);
+    btn.innerHTML = x.label; btn.className = x.class;
+    btn.onclick = ()=>{ document.getElementById('modal').classList.remove('active'); if(x.action)x.action(); };
+    b.appendChild(btn);
   });
   document.getElementById('modal').classList.add('active');
 }
 
-// ============ STARTUP ============
-debug('Avvio caricamento ordini iniziali...', 'step');
 loadOrders();
-debug('✓ Applicazione pronta', 'success');
+debug('Pronto', 'success');
 </script>
-
 </body>
 </html>
